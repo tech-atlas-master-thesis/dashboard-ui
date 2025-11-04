@@ -1,15 +1,22 @@
-import { Injectable } from '@angular/core';
-import {HttpClient, httpResource, HttpResourceOptions, HttpResourceRef} from '@angular/common/http';
-import {map, Observable} from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import {
+  HttpClient,
+  httpResource,
+  HttpResourceOptions,
+  HttpResourceRef,
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Backend {
-  constructor(private readonly httpClient: HttpClient) {
-  }
+  private readonly httpClient = inject(HttpClient);
 
-  public getAsResource<T>(url: () => string, options: HttpResourceOptions<T, unknown> & {defaultValue: NoInfer<T>}): HttpResourceRef<T> {
+  public getAsResource<T>(
+    url: () => string,
+    options: HttpResourceOptions<T, unknown> & { defaultValue: NoInfer<T> },
+  ): HttpResourceRef<T> {
     return httpResource(url, options);
   }
 
