@@ -38,6 +38,4 @@ export default [
       ],
     },
   },
-  // ...angular.configs.templateRecommended,
-  // ...angular.configs.templateAccessibility,
 ];
