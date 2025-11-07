@@ -1,6 +1,22 @@
-# TechAtlasDashboardUi
+# Technology Atlas - Dashboard UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.8.
+
+## Installation
+
+To install all needed dependencies and set up the commit hooks run:
+```bash
+npm install
+```
+
+### Husky
+
+The installation will also install and setup husky. Together with `lint-staged` this will be used on commits to run linters and code formatters.
+
+## Development environment (TODO)
+
+In future we should have a way to mock the backend. For example wiremock, json-server or other frameworks exist, we should pick one.
+
+For local development there will in future be a `docker-compose.yml` file to set up the backends.
 
 ## Development server
 
@@ -36,6 +52,7 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+
 ## Running unit tests
 
 To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
@@ -43,17 +60,3 @@ To execute unit tests with the [Karma](https://karma-runner.github.io) test runn
 ```bash
 ng test
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
