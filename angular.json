@@ -7,10 +7,10 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss",
+          "style": "css",
           "standalone": true,
           "changeDetection": "OnPush",
-          "skipTests": true
+          "skipTests": false
         }
       },
       "root": "",
@@ -29,7 +29,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -81,7 +81,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.css"]
           }
         },
         "lint": {

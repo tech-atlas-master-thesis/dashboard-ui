@@ -1,5 +1,4 @@
 {
-  "plugins": ["stylelint-scss"],
   "rules": {
     "no-empty-source": null,
     "selector-pseudo-element-no-unknown": [
