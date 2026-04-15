@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { NetworkNodes, NetworkLinks } from '@shared/backend/models/network';
+import { ChangeDetectionStrategy, Component, effect, OnInit, signal } from '@angular/core';
+import { NetworkData, NetworkLink, NetworkNode } from '@shared/backend/models/network';
+import { NetworkService } from '@shared/backend/services/network-service';
 import * as d3 from 'd3';
 
 @Component({
@@ -10,23 +11,26 @@ import * as d3 from 'd3';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BasicNetwork implements OnInit {
-  nodes: NetworkNodes[] = [
-    { id: 1, name: 'A', coordinates: '1,2', type: 'Research' },
-    { id: 2, name: 'B', coordinates: '1,2', type: 'Research' },
-    { id: 3, name: 'C', coordinates: '1,2', type: 'Research' },
-    { id: 4, name: 'D', coordinates: '1,2', type: 'Company' },
-    { id: 5, name: 'E', coordinates: '1,2', type: 'Research' },
-    { id: 6, name: 'F', coordinates: '1,2', type: 'Company' },
-  ];
+  // nodes: NetworkNodes[] = [
+  //   { oid: '1', name: 'A', coordinates: {type: 'Point', coordinates: [15.4477, 47.059]}, type: 'Research' },
+  //   { oid: '2', name: 'B', coordinates: {type: 'Point', coordinates: [15.4477, 47.059]}, type: 'Research' },
+  // ];
 
-  links: NetworkLinks[] = [
-    { source: 1, target: 2, projects: ['Sample AB'] },
-    { source: 2, target: 3, projects: ['Sample BC'] },
-    { source: 1, target: 3, projects: ['Sample AC'] },
-    { source: 3, target: 4, projects: ['Sample CD'] },
-    { source: 5, target: 6, projects: ['Sample EF'] },
-    { source: 6, target: 5, projects: ['Sample FE'] },
-  ];
+  // links: NetworkLinks[] = [
+  //   { source: '1', target: '2', projects: ['Sample AB'] },
+  // ];
+
+  selectedNode = signal<NetworkNode | null>(null);
+  selectedLink = signal<NetworkLink | null>(null);
+
+  constructor(public networkservice: NetworkService) {
+    effect(() => {
+      const value = this.networkservice.data.value();
+      if (value) {
+        this.createBasicNetwork(value);
+      }
+    });
+  }
 
   private svg: any;
   private margin = 20;
@@ -36,7 +40,6 @@ export class BasicNetwork implements OnInit {
 
   ngOnInit(): void {
     this.createSVG();
-    this.createBasicNetwork();
   }
 
   private createSVG(): void {
@@ -49,14 +52,14 @@ export class BasicNetwork implements OnInit {
       .attr('transform', `translate(${this.margin}, ${this.margin})`);
   }
 
-  private createBasicNetwork(): void {
+  private createBasicNetwork(data: NetworkData): void {
     const simulation = d3
-      .forceSimulation(this.nodes as any)
+      .forceSimulation(data.nodes as any)
       .force(
         'link',
         d3
-          .forceLink(this.links)
-          .id((d: any) => d.id)
+          .forceLink(data.links)
+          .id((d: any) => d._id.$oid)
           .distance(100),
       )
       .force('charge', d3.forceManyBody())
@@ -65,7 +68,7 @@ export class BasicNetwork implements OnInit {
     const link = this.svg
       .append('g')
       .selectAll('line')
-      .data(this.links)
+      .data(data.links)
       .enter()
       .append('line')
       .attr('stroke', '#999')
@@ -74,7 +77,7 @@ export class BasicNetwork implements OnInit {
     const node = this.svg
       .append('g')
       .selectAll('circle')
-      .data(this.nodes)
+      .data(data.nodes)
       .enter()
       .append('circle')
       .attr('r', 8)
@@ -89,10 +92,20 @@ export class BasicNetwork implements OnInit {
           .on('end', (event, d) => this.dragEnded(event, d, simulation)),
       );
 
+    node.on('click', (event: MouseEvent, d: any) => {
+      this.selectedNode.set(d);
+    });
+
+    link.on('click', (event: MouseEvent, d: any) => {
+      this.selectedLink.set(d);
+    });
+
+    console.log(this.selectedLink());
+
     const label = this.svg
       .append('g')
       .selectAll('text')
-      .data(this.nodes)
+      .data(data.nodes)
       .enter()
       .append('text')
       .text((d: any) => d.name)
