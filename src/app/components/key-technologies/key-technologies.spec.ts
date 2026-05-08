@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Sidebar } from './sidebar';
+import { KeyTechnologies } from './key-technologies';
 
-describe('Sidebar', () => {
-  let component: Sidebar;
-  let fixture: ComponentFixture<Sidebar>;
+describe('KeyTechnologies', () => {
+  let component: KeyTechnologies;
+  let fixture: ComponentFixture<KeyTechnologies>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Sidebar],
+      imports: [KeyTechnologies],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Sidebar);
+    fixture = TestBed.createComponent(KeyTechnologies);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

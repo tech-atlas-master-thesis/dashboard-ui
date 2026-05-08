@@ -1,0 +1,82 @@
+[
+  {
+    "dataset": "",
+    "label": "Fortschrittliche Materialien inkl. Nanotechnologien",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#70A357",
+      "accent": "#BBD9AD"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Künstliche Intelligenz, Big Data, Digitale und Informatiosntechnologien",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#575AA3",
+      "accent": "#9A9CD5"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Quantentechnologie und Photonik",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#988030",
+      "accent": "#DBCD9F"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Fortschrittliche Mikroelektronik/Halbleiter",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#8C57A3",
+      "accent": "#BD90D1"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Fortschrittliche Produktionstechnologien und Robotik, fortschrittliche Sensortechnologie",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#5797A3",
+      "accent": "#93D2DE"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Life Science Technologien",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#A36657",
+      "accent": "#DDACA0"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Energieerzeugung und -speicherung",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#A3578F",
+      "accent": "#DEACD1"
+    }
+  },
+  {
+    "dataset": "",
+    "label": "Nachhaltige Technologien: Kreislaufwirtschaft, Gebäude, Abfall / Wasser",
+    "short": "",
+    "projects": 0,
+    "style": {
+      "color": "#604D33",
+      "accent": "#8D7D68"
+    }
+  }
+]

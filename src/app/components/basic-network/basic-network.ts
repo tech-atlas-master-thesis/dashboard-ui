@@ -1,5 +1,13 @@
-import { ChangeDetectionStrategy, Component, effect, OnInit, signal } from '@angular/core';
-import { NetworkData, NetworkLink, NetworkNode } from '@shared/backend/models/network';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { NetworkData, NetworkLink, NetworkNode } from '@shared/backend/models/network.model';
+import { KeyTechnologyService } from '@shared/backend/services/key-technologies-service';
 import { NetworkService } from '@shared/backend/services/network-service';
 import * as d3 from 'd3';
 
@@ -10,16 +18,7 @@ import * as d3 from 'd3';
   styleUrl: './basic-network.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BasicNetwork implements OnInit {
-  // nodes: NetworkNodes[] = [
-  //   { oid: '1', name: 'A', coordinates: {type: 'Point', coordinates: [15.4477, 47.059]}, type: 'Research' },
-  //   { oid: '2', name: 'B', coordinates: {type: 'Point', coordinates: [15.4477, 47.059]}, type: 'Research' },
-  // ];
-
-  // links: NetworkLinks[] = [
-  //   { source: '1', target: '2', projects: ['Sample AB'] },
-  // ];
-
+export class BasicNetwork implements OnDestroy {
   selectedNode = signal<NetworkNode | null>(null);
   selectedLink = signal<NetworkLink | null>(null);
 
@@ -27,19 +26,43 @@ export class BasicNetwork implements OnInit {
     effect(() => {
       const value = this.networkservice.data.value();
       if (value) {
-        this.createBasicNetwork(value);
+        setTimeout(() => {
+          const el = document.getElementById('basic-network')!;
+          this.width = el.clientWidth - this.margin * 2;
+          this.height = el.clientHeight - this.margin * 2;
+          this.createSVG();
+          this.createBasicNetwork(value);
+          this.attachResizeObserver();
+        });
       }
     });
   }
 
   private svg: any;
   private margin = 20;
-  private width = 800 - this.margin * 2;
-  private height = 500 - this.margin * 2;
+  private width = 0;
+  private height = 0;
   private color = d3.scaleOrdinal(d3.schemeCategory10);
+  private resizeObserver!: ResizeObserver;
 
-  ngOnInit(): void {
-    this.createSVG();
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
+  private attachResizeObserver(): void {
+    this.resizeObserver?.disconnect();
+    const el = document.getElementById('basic-network')!;
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.width = el.clientWidth - this.margin * 2;
+      this.height = el.clientHeight - this.margin * 2;
+      d3.select('div#basic-network').select('svg').remove();
+      this.createSVG();
+      const data = this.networkservice.data.value();
+      if (data) this.createBasicNetwork(data);
+    });
+
+    this.resizeObserver.observe(el);
   }
 
   private createSVG(): void {
@@ -63,7 +86,9 @@ export class BasicNetwork implements OnInit {
           .distance(100),
       )
       .force('charge', d3.forceManyBody())
-      .force('center', d3.forceCenter(this.width / 2, this.height / 2));
+      .force('center', d3.forceCenter(this.width / 2, this.height / 2))
+      .alphaDecay(0.05)
+      .on('end', () => simulation.stop());
 
     const link = this.svg
       .append('g')
@@ -99,8 +124,6 @@ export class BasicNetwork implements OnInit {
     link.on('click', (event: MouseEvent, d: any) => {
       this.selectedLink.set(d);
     });
-
-    console.log(this.selectedLink());
 
     const label = this.svg
       .append('g')

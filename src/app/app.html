@@ -1,4 +1,6 @@
-<app-sidebar class="fixed left-0 top-0 h-screen w-64" />
-<main class="ml-64 min-h-screen p-10">
-  <router-outlet />
-</main>
+<div class="h-screen flex flex-col">
+  <app-header />
+  <main class="flex-1 p-5 overflow-hidden bg-gray-100">
+    <router-outlet />
+  </main>
+</div>
