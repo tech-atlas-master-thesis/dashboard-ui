@@ -29,7 +29,7 @@ export class KeyTechnologies implements OnDestroy {
 
   constructor(public keyTechnologyService: KeyTechnologyService) {
     effect(() => {
-      const fields = this.keyTechnologyService.data.value() as TechnologyField[] | undefined;
+      const fields = this.keyTechnologyService.data.value();
       if (fields) {
         setTimeout(() => {
           const el = document.getElementById('key-technologies')!;

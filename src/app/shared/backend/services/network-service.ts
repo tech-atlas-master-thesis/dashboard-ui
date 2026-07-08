@@ -1,19 +1,29 @@
 import { inject, Injectable, resource } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { NetworkData } from '../models/network.model';
 import environment from '../../../environment/environment';
+import { DatasetsState } from '../../../state/datasets/datasets.state';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NetworkService {
-  private readonly apiUrl = `${environment.baseUrl}${environment.apiUrl}/network`;
+  private readonly datasetState = inject(DatasetsState);
   private readonly http = inject(HttpClient);
 
   readonly data = resource({
-    loader: () => {
-      return firstValueFrom(this.http.get<NetworkData>(this.apiUrl));
+    params: () => this.datasetState.selectedDataset(),
+    loader: ({ params }) => {
+      return firstValueFrom(
+        params === ''
+          ? of({ nodes: [], links: [] })
+          : this.http.get<NetworkData>(this.getApiUrl(params)),
+      );
     },
   });
+
+  private getApiUrl(dataset: string) {
+    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network`;
+  }
 }
