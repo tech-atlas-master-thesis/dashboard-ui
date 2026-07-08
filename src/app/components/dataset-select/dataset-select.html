@@ -1,8 +1,8 @@
 <div>
   <select [(ngModel)]="datasetState.selectedPipeline">
     <option value="">Pipeline</option>
-    @for (pipeline of datasetState.pipelines.value(); track pipeline.pipeline) {
-      <option [value]="pipeline.pipeline">{{ pipeline.pipelineName }}</option>
+    @for (pipeline of datasetState.pipelines.value(); track pipeline) {
+      <option [value]="pipeline">{{ pipeline }}</option>
     }
   </select>
   <select

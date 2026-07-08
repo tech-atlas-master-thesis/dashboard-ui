@@ -1,7 +1,7 @@
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, linkedSignal } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { DatasetApi } from '@shared/backend/services/dataset.api';
-import { DataSetModel, PipelineModel } from '@shared/backend/models/data-set.model';
+import { DataSetModel } from '@shared/backend/models/data-set.model';
 
 @Injectable({
   providedIn: 'root',
@@ -9,29 +9,21 @@ import { DataSetModel, PipelineModel } from '@shared/backend/models/data-set.mod
 export class DatasetsState {
   datasetsApi = inject(DatasetApi);
 
-  pipelines = httpResource<PipelineModel[]>(() => this.datasetsApi.getPipelinesUrl(), {
+  pipelines = httpResource<string[]>(() => this.datasetsApi.getPipelinesUrl(), {
     defaultValue: [],
   });
 
-  selectedPipeline = signal<string>('');
+  selectedPipeline = linkedSignal<string>(
+    () => this.getDefaultPipeline(this.pipelines.value()) ?? '',
+  );
 
   datasets = httpResource<DataSetModel[]>(() =>
     this.datasetsApi.getDataSetsUrl(this.selectedPipeline()),
   );
 
-  selectedDataset = signal<string>('');
+  selectedDataset = linkedSignal<string>(() => this.datasets.value()?.at(0)?._id ?? '');
 
-  constructor() {
-    effect(() => {
-      const pipelines = this.pipelines.value();
-
-      if (pipelines.length === 1) {
-        this.selectedPipeline.set(pipelines.at(0)?.pipeline ?? '');
-      }
-    });
-
-    effect(() => {
-      this.selectedDataset.set(this.datasets.value()?.at(0)?._id ?? '');
-    });
+  private getDefaultPipeline(pipelines: string[]): string | undefined {
+    return pipelines.length === 1 ? pipelines.at(0) : undefined;
   }
 }
