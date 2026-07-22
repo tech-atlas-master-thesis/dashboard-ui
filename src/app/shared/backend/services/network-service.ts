@@ -1,4 +1,4 @@
-import { inject, Injectable, resource } from '@angular/core';
+import { inject, Injectable, resource, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, of } from 'rxjs';
 import { NetworkData } from '../models/network.model';
@@ -12,26 +12,32 @@ export class NetworkService {
   private readonly datasetState = inject(DatasetsState);
   private readonly http = inject(HttpClient);
 
+  apiUrl = signal('');
+
   readonly data = resource({
-    params: () => this.datasetState.selectedDataset(),
+    params: () => this.apiUrl(),
     loader: ({ params }) => {
       return firstValueFrom(
-        params === ''
-          ? of({ nodes: [], links: [] })
-          : this.http.get<NetworkData>(this.getApiUrl(params)),
+        params === '' ? of({ nodes: [], links: [] }) : this.http.get<NetworkData>(params),
       );
     },
   });
 
-  private getApiUrl(dataset: string) {
-    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network`;
+  loadByTechnology(technologyID: string): void {
+    this.apiUrl.set(
+      `${environment.baseUrl}${environment.apiUrl}/data/${this.datasetState.selectedDataset()}/network/${technologyID}`,
+    );
   }
 
-  private loadByTechnology(dataset: string, technologyID: string) {
-    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network/${technologyID}`;
+  loadByField(fieldID: string): void {
+    this.apiUrl.set(
+      `${environment.baseUrl}${environment.apiUrl}/data/${this.datasetState.selectedDataset()}/network/field/${fieldID}`,
+    );
   }
 
-  private loadByField(dataset: string, fieldID: string) {
-    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network/field/${fieldID}`;
+  loadAll(): void {
+    this.apiUrl.set(
+      `${environment.baseUrl}${environment.apiUrl}/data/${this.datasetState.selectedDataset()}/network`,
+    );
   }
 }
