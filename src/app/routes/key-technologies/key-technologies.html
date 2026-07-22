@@ -1,0 +1,32 @@
+<div class="h-full w-full p-5 flex flex-col gap-2">
+  @if (keyTechnologyService.data.isLoading()) {
+    <div class="flex-1 flex flex-col items-center justify-center gap-4">
+      <div
+        class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"
+      ></div>
+      <span class="text-gray-400 font-light text-sm">Wird geladen…</span>
+    </div>
+  } @else {
+    <div class="flex items-center gap-4 shrink-0 h-2 pl-3">
+      @if (selectedField()) {
+        <button
+          (click)="backToFields()"
+          class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+        >
+          ← Zurück
+        </button>
+        <div class="w-px h-5 bg-gray-300"></div>
+        <span
+          class="text-xs font-medium px-2 py-1 rounded-full text-white"
+          [style.background]="selectedField()!.style.color"
+        >
+          {{ selectedField()!.label }}
+        </span>
+      } @else {
+        <h1 class="text-xl font-light"></h1>
+      }
+    </div>
+
+    <div id="key-technologies" class="flex-1 min-h-0 w-full"></div>
+  }
+</div>

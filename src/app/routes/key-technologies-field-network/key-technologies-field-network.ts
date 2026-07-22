@@ -3,19 +3,20 @@ import * as d3 from 'd3';
 import { KeyTechnologyService } from '@shared/backend/services/key-technologies-service';
 import {
   TechnologyField,
-  KeyTechnology,
   TechnologyViewModel,
 } from '@shared/backend/models/key-technologies.model';
+import { BasicNetwork } from '../../components/basic-network/basic-network';
 
 type D3Node = d3.HierarchyRectangularNode<TechnologyViewModel>;
 
 @Component({
-  selector: 'app-key-technologies',
-  templateUrl: './key-technologies.html',
-  styleUrls: ['./key-technologies.css'],
+  selector: 'app-key-technologies-network',
+  templateUrl: './key-technologies-field-network.html',
+  styleUrls: ['./key-technologies-field-network.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [BasicNetwork],
 })
-export class KeyTechnologies implements OnDestroy {
+export class KeyTechnologiesFieldNetwork implements OnDestroy {
   selectedField = signal<TechnologyField | null>(null);
 
   private width = 0;
@@ -24,15 +25,14 @@ export class KeyTechnologies implements OnDestroy {
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private g!: d3.Selection<SVGGElement, unknown, null, undefined>;
 
-  private readonly fieldHeaderHeight = 30;
   private resizeObserver!: ResizeObserver;
 
   constructor(public keyTechnologyService: KeyTechnologyService) {
     effect(() => {
-      const fields = this.keyTechnologyService.data.value();
+      const fields = this.keyTechnologyService.data.value() as TechnologyField[] | undefined;
       if (fields) {
         setTimeout(() => {
-          const el = document.getElementById('key-technologies')!;
+          const el = document.getElementById('key-technologies-network');
           if (!el) return;
           this.width = el.clientWidth;
           this.height = el.clientHeight;
@@ -49,9 +49,14 @@ export class KeyTechnologies implements OnDestroy {
     this.resizeObserver?.disconnect();
   }
 
+  backToFields(): void {
+    this.selectedField.set(null);
+    this.renderFields(this.allFields);
+  }
+
   private attachResizeObserver(): void {
     this.resizeObserver?.disconnect();
-    const el = document.getElementById('key-technologies')!;
+    const el = document.getElementById('key-technologies-network');
     if (!el) return;
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -59,10 +64,7 @@ export class KeyTechnologies implements OnDestroy {
       this.height = el.clientHeight;
       this.svg.attr('width', this.width).attr('height', this.height);
 
-      const currentField = this.selectedField();
-      if (currentField) {
-        this.renderTechnologies(currentField);
-      } else {
+      if (!this.selectedField()) {
         this.renderFields(this.allFields);
       }
     });
@@ -70,7 +72,7 @@ export class KeyTechnologies implements OnDestroy {
   }
 
   private initChart(): void {
-    const el = document.getElementById('key-technologies')!;
+    const el = document.getElementById('key-technologies-network')!;
     el.innerHTML = '';
 
     this.svg = d3.select(el).append('svg').attr('width', this.width).attr('height', this.height);
@@ -137,7 +139,6 @@ export class KeyTechnologies implements OnDestroy {
       .join('g')
       .attr('transform', (d) => `translate(${d.x0},${d.y0})`)
       .style('cursor', 'pointer')
-      // .attr('filter', 'url(#cell-shadow)')
       .on('click', (_, d) => onClick(d));
 
     nodes
@@ -162,7 +163,7 @@ export class KeyTechnologies implements OnDestroy {
       .append('text')
       .attr('x', 8)
       .attr('y', 20)
-      .attr('fill', '#000')
+      .attr('fill', '#fff')
       .style('font-size', '14px')
       .style('font-weight', '600')
       .style('pointer-events', 'none')
@@ -179,7 +180,7 @@ export class KeyTechnologies implements OnDestroy {
       .append('text')
       .attr('x', 8)
       .attr('y', (d) => d.y1 - d.y0 - 8)
-      .attr('fill', '#000')
+      .attr('fill', '#fff')
       .style('font-size', '12px')
       .style('pointer-events', 'none')
       .text((d) => `${d.data.projects} Projekte`);
@@ -194,7 +195,7 @@ export class KeyTechnologies implements OnDestroy {
         projects: f.projects,
         color: f.style.color,
         accentColor: f.style.accent,
-        fieldID: f._id,
+        fieldID: f._id.$oid,
         value: Math.max(Math.sqrt(f.projects ?? 1), 1),
       })),
     };
@@ -202,7 +203,6 @@ export class KeyTechnologies implements OnDestroy {
 
   private renderFields(fields: TechnologyField[]): void {
     this.selectedField.set(null);
-    this.svg.selectAll('text.back-btn').remove();
     this.g.selectAll('*').remove();
 
     const root = d3
@@ -212,66 +212,16 @@ export class KeyTechnologies implements OnDestroy {
 
     d3
       .treemap<TechnologyViewModel>()
-      .size([this.width, this.height - this.fieldHeaderHeight])
+      .size([this.width, this.height])
       .paddingInner(8)
       .paddingOuter(12)
       .tile(d3.treemapSquarify.ratio(1))(root);
 
-    this.g.attr('transform', `translate(0, ${this.fieldHeaderHeight})`);
-
     this.renderSquares(root.leaves() as D3Node[], (d) => {
-      const field = fields.find((f) => f._id === d.data.fieldID);
-      if (field) this.renderTechnologies(field);
+      const field = fields.find((f) => f._id.$oid === d.data.fieldID);
+      if (field) {
+        this.selectedField.set(field);
+      }
     });
-  }
-
-  private buildTechHierachy(field: TechnologyField): TechnologyViewModel {
-    return {
-      label: 'root',
-      projects: field.projects,
-      children: field.technologies.map((t: KeyTechnology) => ({
-        label: t.label,
-        projects: t.projects,
-        color: field.style.color,
-        accentColor: field.style.accent,
-        techID: t._id,
-        value: Math.max(Math.sqrt(t.projects ?? 1), 1),
-      })),
-    };
-  }
-
-  private renderTechnologies(field: TechnologyField): void {
-    this.selectedField.set(field);
-    this.svg.selectAll('text.back-btn').remove();
-    this.g.selectAll('*').remove();
-
-    const root = d3
-      .hierarchy<TechnologyViewModel>(this.buildTechHierachy(field))
-      .sum((d) => d.value ?? 0)
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-
-    d3
-      .treemap<TechnologyViewModel>()
-      .size([this.width, this.height - this.fieldHeaderHeight])
-      .paddingInner(8)
-      .paddingOuter(12)
-      .tile(d3.treemapSquarify.ratio(1))(root);
-
-    this.g.attr('transform', `translate(0, ${this.fieldHeaderHeight})`);
-
-    this.renderSquares(root.leaves() as D3Node[], (d) => {
-      console.log('technology clicked', d.data);
-    });
-
-    this.svg
-      .append('text')
-      .attr('class', 'back-btn')
-      .attr('x', 12)
-      .attr('y', 28)
-      .attr('fill', '#000')
-      .style('font-size', '14px')
-      .style('cursor', 'pointer')
-      .text('← Alle Felder')
-      .on('click', () => this.renderFields(this.allFields));
   }
 }

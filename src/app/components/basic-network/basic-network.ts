@@ -2,12 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
+  Input,
   OnDestroy,
-  OnInit,
   signal,
 } from '@angular/core';
 import { NetworkData, NetworkLink, NetworkNode } from '@shared/backend/models/network.model';
-import { KeyTechnologyService } from '@shared/backend/services/key-technologies-service';
 import { NetworkService } from '@shared/backend/services/network-service';
 import * as d3 from 'd3';
 
@@ -19,15 +18,49 @@ import * as d3 from 'd3';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BasicNetwork implements OnDestroy {
+  @Input() set filterByTechnology(id: string | null) {
+    if (id) {
+      this.networkservice.loadByTechnology(id);
+    } else {
+      this.networkservice.loadAll();
+    }
+  }
+
+  @Input() set filterByField(id: string | null) {
+    if (id) {
+      this.networkservice.loadByField(id);
+    }
+  }
+
   selectedNode = signal<NetworkNode | null>(null);
   selectedLink = signal<NetworkLink | null>(null);
+  private readonly typeColors: Record<string, string> = {
+    'Außeruniversitäre Forschungseinrichtung': '#159d18',
+    Universität: '#2f58e0',
+    'unternehmerisch tätig': '#e7761a',
+    Fachhochschule: '#7f259c',
+    Sonstige: '#b3bf2c',
+    'Bund, Länder, Gemeinden': '#3d3330',
+    'Gemeinnützige Organisation': '#e80a58',
+  };
+  private getColor(type: string): string {
+    return this.typeColors[type] ?? '#94a3b8';
+  }
+
+  private svg: any;
+  private margin = 20;
+  private width = 0;
+  private height = 0;
+  private resizeObserver!: ResizeObserver;
 
   constructor(public networkservice: NetworkService) {
     effect(() => {
       const value = this.networkservice.data.value();
       if (value) {
         setTimeout(() => {
-          const el = document.getElementById('basic-network')!;
+          console.log(value);
+          const el = document.getElementById('basic-network');
+          if (!el) return;
           this.width = el.clientWidth - this.margin * 2;
           this.height = el.clientHeight - this.margin * 2;
           this.createSVG();
@@ -38,20 +71,14 @@ export class BasicNetwork implements OnDestroy {
     });
   }
 
-  private svg: any;
-  private margin = 20;
-  private width = 0;
-  private height = 0;
-  private color = d3.scaleOrdinal(d3.schemeCategory10);
-  private resizeObserver!: ResizeObserver;
-
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
   }
 
   private attachResizeObserver(): void {
     this.resizeObserver?.disconnect();
-    const el = document.getElementById('basic-network')!;
+    const el = document.getElementById('basic-network');
+    if (!el) return;
 
     this.resizeObserver = new ResizeObserver(() => {
       this.width = el.clientWidth - this.margin * 2;
@@ -66,13 +93,24 @@ export class BasicNetwork implements OnDestroy {
   }
 
   private createSVG(): void {
-    this.svg = d3
+    d3.select('div#basic-network').select('svg').remove();
+
+    const svgRoot = d3
       .select('div#basic-network')
       .append('svg')
       .attr('width', this.width + this.margin * 2)
-      .attr('height', this.height + this.margin * 2)
-      .append('g')
-      .attr('transform', `translate(${this.margin}, ${this.margin})`);
+      .attr('height', this.height + this.margin * 2);
+
+    this.svg = svgRoot.append('g').attr('transform', `translate(${this.margin}, ${this.margin})`);
+
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 4]) // min/max Zoom-Level
+      .on('zoom', (event) => {
+        this.svg.attr('transform', event.transform);
+      });
+
+    svgRoot.call(zoom);
   }
 
   private createBasicNetwork(data: NetworkData): void {
@@ -94,19 +132,18 @@ export class BasicNetwork implements OnDestroy {
       .append('g')
       .selectAll('line')
       .data(data.links)
-      .enter()
-      .append('line')
+      .join('line')
       .attr('stroke', '#999')
-      .attr('stroke-opacity', 0.6);
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', (d: NetworkLink) => Math.sqrt(d.projects.length));
 
     const node = this.svg
       .append('g')
       .selectAll('circle')
       .data(data.nodes)
-      .enter()
-      .append('circle')
+      .join('circle')
       .attr('r', 8)
-      .attr('fill', (d: any) => this.color(d.type))
+      .attr('fill', (d: NetworkNode) => this.getColor(d.type))
       .attr('stroke', 'white')
       .attr('stroke-width', 2)
       .call(
@@ -117,21 +154,15 @@ export class BasicNetwork implements OnDestroy {
           .on('end', (event, d) => this.dragEnded(event, d, simulation)),
       );
 
-    node.on('click', (event: MouseEvent, d: any) => {
-      this.selectedNode.set(d);
-    });
-
-    link.on('click', (event: MouseEvent, d: any) => {
-      this.selectedLink.set(d);
-    });
+    node.on('click', (_: MouseEvent, d: NetworkNode) => this.selectedNode.set(d));
+    link.on('click', (_: MouseEvent, d: NetworkLink) => this.selectedLink.set(d));
 
     const label = this.svg
       .append('g')
       .selectAll('text')
       .data(data.nodes)
-      .enter()
-      .append('text')
-      .text((d: any) => d.name)
+      .join('text')
+      .text((d: NetworkNode) => d.name)
       .attr('dx', 10)
       .attr('dy', 4)
       .attr('font-size', 10);

@@ -26,4 +26,12 @@ export class NetworkService {
   private getApiUrl(dataset: string) {
     return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network`;
   }
+
+  private loadByTechnology(dataset: string, technologyID: string) {
+    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network/${technologyID}`;
+  }
+
+  private loadByField(dataset: string, fieldID: string) {
+    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/network/field/${fieldID}`;
+  }
 }

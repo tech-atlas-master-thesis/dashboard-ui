@@ -2,12 +2,14 @@ import { Routes } from '@angular/router';
 import { Home } from './routes/home/home';
 import { Map } from './components/map/map';
 import { BasicNetwork } from './components/basic-network/basic-network';
-import { KeyTechnologies } from './components/key-technologies/key-technologies';
+import { KeyTechnologies } from './routes/key-technologies/key-technologies';
+import { KeyTechnologyDetail } from './routes/key-technology-detail/key-technology-detail';
+import { KeyTechnologiesFieldNetwork } from './routes/key-technologies-field-network/key-technologies-field-network';
 
 export const routes: Routes = [
   {
     path: '',
-    component: Home,
+    component: KeyTechnologies,
   },
   {
     path: 'map',
@@ -20,6 +22,14 @@ export const routes: Routes = [
   {
     path: 'key-technologies',
     component: KeyTechnologies,
+  },
+  {
+    path: 'key-technologies-field-network',
+    component: KeyTechnologiesFieldNetwork,
+  },
+  {
+    path: 'key-technologies/:id',
+    component: KeyTechnologyDetail,
   },
   {
     path: 'home',

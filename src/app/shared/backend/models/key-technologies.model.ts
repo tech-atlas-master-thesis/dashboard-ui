@@ -4,7 +4,7 @@ export interface Style {
 }
 
 export interface KeyTechnology {
-  _id: string;
+  _id: { $oid: string };
   label: string;
   short: string;
   field: string;
@@ -13,7 +13,7 @@ export interface KeyTechnology {
 }
 
 export interface TechnologyField {
-  _id: string;
+  _id: { $oid: string };
   label: string;
   short: string;
   dataset: string;
