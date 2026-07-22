@@ -1,5 +1,5 @@
-<div>
-  <select [(ngModel)]="datasetState.selectedPipeline">
+<div class="flex flex-row gap-2">
+  <select [(ngModel)]="datasetState.selectedPipeline" class="font-light text-sm">
     <option value="">Pipeline</option>
     @for (pipeline of datasetState.pipelines.value(); track pipeline) {
       <option [value]="pipeline">{{ pipeline }}</option>
@@ -8,6 +8,7 @@
   <select
     [(ngModel)]="datasetState.selectedDataset"
     [disabled]="datasetState.selectedPipeline() === ''"
+    class="font-light text-sm"
   >
     <option value="">Datensatz</option>
     @for (dataset of datasetState.datasets.value(); track dataset.pipeline) {
