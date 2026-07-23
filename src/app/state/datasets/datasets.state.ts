@@ -7,6 +7,7 @@ import { DataSetModel } from '@shared/backend/models/data-set.model';
   providedIn: 'root',
 })
 export class DatasetsState {
+  private readonly DEFAULT_PIPELINE = 'Datensatz - Alle Projekte';
   datasetsApi = inject(DatasetApi);
 
   pipelines = httpResource<string[]>(() => this.datasetsApi.getPipelinesUrl(), {
@@ -24,6 +25,9 @@ export class DatasetsState {
   selectedDataset = linkedSignal<string>(() => this.datasets.value()?.at(0)?._id ?? '');
 
   private getDefaultPipeline(pipelines: string[]): string | undefined {
-    return pipelines.length === 1 ? pipelines.at(0) : undefined;
+    if (pipelines.length === 1) {
+      return pipelines.at(0);
+    }
+    return pipelines.includes(this.DEFAULT_PIPELINE) ? this.DEFAULT_PIPELINE : undefined;
   }
 }
