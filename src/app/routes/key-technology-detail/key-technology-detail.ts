@@ -23,7 +23,7 @@ export class KeyTechnologyDetail {
       const id = this.route.snapshot.paramMap.get('id');
       if (fields && id) {
         for (const f of fields) {
-          const tech = f.technologies.find((t) => t.short === id);
+          const tech = f.technologies.find((t) => t.short === id || t.label === id);
           if (tech) {
             this.technology.set(tech);
             this.field.set(f);

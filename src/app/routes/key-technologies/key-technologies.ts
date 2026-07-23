@@ -265,7 +265,7 @@ export class KeyTechnologies implements OnDestroy {
         projects: t.projects,
         color: field.style.color,
         accentColor: field.style.accent,
-        techID: t.short,
+        techID: t.short ?? t.label,
         value: Math.max(Math.sqrt(t.projects ?? 1), 3),
       })),
     };
