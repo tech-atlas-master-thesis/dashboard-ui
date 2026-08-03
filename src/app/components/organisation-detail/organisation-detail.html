@@ -1,0 +1,36 @@
+<div
+  class="bg-white backdrop-blur-sm rounded-xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border"
+  [style.border-color]="typeColor"
+>
+  <div class="flex justify-between">
+    <p class="text-sm font-medium">{{ organisation.name }}</p>
+    <button
+      (click)="closed.emit()"
+      class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
+    >
+      ✕
+    </button>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <span class="w-2.5 h-2.5 rounded-full" [style.background]="typeColor"></span>
+    <p class="text-xs text-gray-500">{{ organisation.type }}</p>
+  </div>
+
+  @if (projectCount !== null || cooperationCount !== null) {
+    <div class="flex items-start gap-6 border-t border-gray-100 pt-2">
+      @if (projectCount !== null) {
+        <div class="flex flex-col">
+          <p class="text-lg font-light">{{ projectCount }}</p>
+          <p class="text-xs text-gray-400">{{ projectCount === 1 ? 'Projekt' : 'Projekte' }}</p>
+        </div>
+      }
+      @if (cooperationCount !== null) {
+        <div class="flex flex-col">
+          <p class="text-lg font-light">{{ cooperationCount }}</p>
+          <p class="text-xs text-gray-400">Partner</p>
+        </div>
+      }
+    </div>
+  }
+</div>

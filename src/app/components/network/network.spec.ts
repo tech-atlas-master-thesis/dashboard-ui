@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BasicNetwork } from './basic-network';
+import { Network } from './network';
 
-describe('BasicNetwork', () => {
-  let component: BasicNetwork;
-  let fixture: ComponentFixture<BasicNetwork>;
+describe('BipartiteNetwork', () => {
+  let component: Network;
+  let fixture: ComponentFixture<Network>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BasicNetwork],
+      imports: [Network],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(BasicNetwork);
+    fixture = TestBed.createComponent(Network);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

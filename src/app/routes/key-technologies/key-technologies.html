@@ -4,29 +4,97 @@
       <div
         class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"
       ></div>
-      <span class="text-gray-400 font-light text-sm">Wird geladen…</span>
+      <p class="text-gray-400 font-light text-sm">Wird geladen ...</p>
     </div>
   } @else {
-    <div class="flex items-center gap-4 shrink-0 h-2 pl-3">
+    <div class="flex items-center justify-between shrink-0 h-2 px-3">
+      <div class="flex items-center gap-4">
+        @if (selectedField()) {
+          <button
+            (click)="backToFields()"
+            class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+          >
+            ← Zurück
+          </button>
+          <div class="w-px h-5 bg-gray-300"></div>
+          <p
+            class="text-xs font-medium px-2 py-1 rounded-full text-white"
+            [style.background]="selectedField()!.style.color"
+          >
+            {{ selectedField()!.label }}
+          </p>
+        }
+      </div>
+
       @if (selectedField()) {
-        <button
-          (click)="backToFields()"
-          class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
-        >
-          ← Zurück
-        </button>
-        <div class="w-px h-5 bg-gray-300"></div>
-        <span
-          class="text-xs font-medium px-2 py-1 rounded-full text-white"
-          [style.background]="selectedField()!.style.color"
-        >
-          {{ selectedField()!.label }}
-        </span>
-      } @else {
-        <h1 class="text-xl font-light"></h1>
+        <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
+          <button
+            (click)="setMode('technologies')"
+            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+            [class]="
+              mode() === 'technologies'
+                ? 'bg-white text-gray-800 shadow-sm font-medium'
+                : 'text-gray-500 hover:text-gray-700'
+            "
+          >
+            Technologien
+          </button>
+          <button
+            (click)="setMode('network')"
+            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+            [class]="
+              mode() === 'network'
+                ? 'bg-white text-gray-800 shadow-sm font-medium'
+                : 'text-gray-500 hover:text-gray-700'
+            "
+          >
+            Netzwerk
+          </button>
+        </div>
       }
     </div>
 
-    <div id="key-technologies" class="flex-1 min-h-0 w-full"></div>
+    @if (showNetwork()) {
+      <div class="flex-1 min-h-0 w-full relative">
+        <app-network
+          [filterByField]="selectedField()!._id.$oid"
+          [filters]="filters()"
+          (nodeSelected)="onNodeSelected($event)"
+          (projectSelected)="onProjectSelected($event)"
+        >
+        </app-network>
+
+        <div class="absolute top-3 right-3 z-10">
+          <app-network-filter
+            [data]="networkService.data.value() ?? null"
+            [filters]="filters()"
+            (filtersChange)="filters.set($event)"
+          ></app-network-filter>
+        </div>
+
+        @if (selectedOrganisation()) {
+          <div class="absolute bottom-3 left-3 z-10 w-72">
+            <app-organisation-detail
+              [organisation]="selectedOrganisation()!.organisation"
+              [projectCount]="selectedOrganisation()!.projectCount"
+              [cooperationCount]="selectedOrganisation()!.cooperationCount"
+              (closed)="closePanels()"
+            >
+            </app-organisation-detail>
+          </div>
+        }
+
+        @if (selectedProject()) {
+          <div class="absolute bottom-3 left-3 z-10 w-80">
+            <app-project-detail
+              [selection]="selectedProject()!"
+              (closed)="closePanels()"
+            ></app-project-detail>
+          </div>
+        }
+      </div>
+    } @else {
+      <div id="key-technologies" class="flex-1 min-h-0 w-full"></div>
+    }
   }
 </div>

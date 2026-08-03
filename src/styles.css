@@ -1,7 +1,15 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'tailwindcss';
 
-/* styles.scss */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme {
   --color-primary: #743f1e;
   --color-secondary: #76543e;

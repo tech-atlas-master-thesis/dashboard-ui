@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Map } from '../../components/map/map';
-import { BasicNetwork } from '../../components/basic-network/basic-network';
 
 @Component({
   selector: 'app-home',
