@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { Organisation, organisationColor } from '@shared/backend/models/network.model';
+import {
+  Organisation,
+  organisationColor,
+  organisationTypeName,
+} from '@shared/backend/models/network.model';
 
 @Component({
   selector: 'app-organisation-detail',
@@ -16,4 +20,6 @@ export class OrganisationDetail {
   get typeColor(): string {
     return organisationColor(this.organisation.type);
   }
+
+  protected readonly organisationTypeName = organisationTypeName;
 }

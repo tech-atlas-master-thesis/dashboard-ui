@@ -25,7 +25,7 @@
       </p>
     }
     @if (selection.project.status) {
-      <p>Status: {{ selection.project.status }}</p>
+      <p>Status: {{ projectStatusName(selection.project.status) }}</p>
     }
     @if (selection.project.programme) {
       <p>Programm: {{ selection.project.programme.name }}</p>

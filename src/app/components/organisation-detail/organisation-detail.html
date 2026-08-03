@@ -14,7 +14,7 @@
 
   <div class="flex items-center gap-2">
     <span class="w-2.5 h-2.5 rounded-full" [style.background]="typeColor"></span>
-    <p class="text-xs text-gray-500">{{ organisation.type }}</p>
+    <p class="text-xs text-gray-500">{{ organisationTypeName(organisation.type) }}</p>
   </div>
 
   @if (projectCount !== null || cooperationCount !== null) {
