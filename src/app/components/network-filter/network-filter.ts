@@ -12,6 +12,8 @@ import {
   NetworkFilters,
   emptyFilters,
   organisationColor,
+  projectStatusName,
+  organisationTypeName,
 } from '@shared/backend/models/network.model';
 import { matchesFilters } from '@shared/backend/utils/network-filter.utils';
 
@@ -78,7 +80,7 @@ export class NetworkFilter {
       if (p.status) set.add(p.status);
     });
     this._filters().statuses.forEach((s) => set.add(s));
-    return [...set].sort();
+    return [...set].sort().map((t) => ({ key: t, label: projectStatusName(t) }));
   });
 
   organisationTypes = computed(() => {
@@ -91,7 +93,9 @@ export class NetworkFilter {
     });
     this._filters().organisationTypes.forEach((t) => set.add(t));
 
-    return [...set].sort().map((t) => ({ key: t, label: t, color: organisationColor(t) }));
+    return [...set]
+      .sort()
+      .map((t) => ({ key: t, label: organisationTypeName(t), color: organisationColor(t) }));
   });
 
   private toggleIn(list: string[], all: string[], value: string): string[] {
@@ -122,7 +126,14 @@ export class NetworkFilter {
 
   toggleStatus(s: string): void {
     const f = this._filters();
-    this.filtersChange.emit({ ...f, statuses: this.toggleIn(f.statuses, this.statuses(), s) });
+    this.filtersChange.emit({
+      ...f,
+      statuses: this.toggleIn(
+        f.statuses,
+        this.statuses().map((st) => st.key),
+        s,
+      ),
+    });
   }
 
   toggleType(t: string): void {
@@ -148,4 +159,7 @@ export class NetworkFilter {
   reset(): void {
     this.filtersChange.emit(emptyFilters());
   }
+
+  protected readonly projectStatusName = projectStatusName;
+  protected readonly organisationTypeName = organisationTypeName;
 }

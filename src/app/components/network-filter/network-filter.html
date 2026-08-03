@@ -73,11 +73,11 @@
           <label class="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              [checked]="isActive(current().statuses, status)"
-              (change)="toggleStatus(status)"
+              [checked]="isActive(current().statuses, status.key)"
+              (change)="toggleStatus(status.key)"
               class="rounded"
             />
-            <p class="text-xs text-gray-600">{{ status }}</p>
+            <p class="text-xs text-gray-600">{{ status.label }}</p>
           </label>
         }
       </div>
