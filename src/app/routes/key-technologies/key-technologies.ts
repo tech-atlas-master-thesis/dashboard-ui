@@ -5,6 +5,7 @@ import {
   effect,
   OnDestroy,
   signal,
+  untracked,
 } from '@angular/core';
 import * as d3 from 'd3';
 import { KeyTechnologyService } from '@shared/backend/services/key-technologies-service';
@@ -25,13 +26,15 @@ import { Network } from '../../components/network/network';
 import { NetworkFilter } from '../../components/network-filter/network-filter';
 import { OrganisationDetail } from '../../components/organisation-detail/organisation-detail';
 import { ProjectDetail } from '../../components/project-detail/project-detail';
+import { Metrics } from '../../components/metrics/metrics';
 
 type D3Node = d3.HierarchyRectangularNode<TechnologyViewModel>;
 type Mode = 'technologies' | 'network';
+type FieldMode = 'tiles' | 'metrics';
 
 @Component({
   selector: 'app-key-technologies',
-  imports: [Network, NetworkFilter, OrganisationDetail, ProjectDetail],
+  imports: [Network, NetworkFilter, OrganisationDetail, ProjectDetail, Metrics],
   templateUrl: './key-technologies.html',
   styleUrls: ['./key-technologies.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +43,8 @@ export class KeyTechnologies implements OnDestroy {
   selectedField = signal<TechnologyField | null>(null);
   mode = signal<Mode>('technologies');
   showNetwork = computed(() => this.mode() === 'network' && !!this.selectedField());
+  fieldMode = signal<FieldMode>('tiles');
+  showMetrics = computed(() => this.fieldMode() === 'metrics' && !this.selectedField());
 
   filters = signal<NetworkFilters>(emptyFilters());
   selectedOrganisation = signal<OrganisationSelection | null>(null);
@@ -62,23 +67,26 @@ export class KeyTechnologies implements OnDestroy {
       const fields = this.keyTechnologyService.data.value();
       if (!fields) return;
 
-      this.allFields = fields;
+      untracked(() => {
+        this.allFields = fields;
 
-      const params = this.route.snapshot.queryParamMap;
-      const fieldID = params.get('field');
-      const field = fieldID ? (fields.find((f) => f._id.$oid === fieldID) ?? null) : null;
-      const mode: Mode = params.get('mode') === 'network' && field ? 'network' : 'technologies';
+        const params = this.route.snapshot.queryParamMap;
+        const fieldID = params.get('field');
+        const field = fieldID ? (fields.find((f) => f._id.$oid === fieldID) ?? null) : null;
 
-      this.mode.set(mode);
+        this.fieldMode.set(params.get('view') === 'metrics' ? 'metrics' : 'tiles');
 
-      if (mode === 'network' && field) {
-        this.selectedField.set(field);
-        return;
-      }
-
-      this.withChart(() => {
-        if (field) this.renderTechnologies(field);
-        else this.renderFields(fields);
+        if (field) {
+          this.mode.set(params.get('mode') === 'network' ? 'network' : 'technologies');
+          this.selectedField.set(field);
+          if (this.mode() === 'network') return;
+          this.withChart(() => this.renderTechnologies(field));
+        } else {
+          this.mode.set('technologies');
+          this.selectedField.set(null);
+          if (this.fieldMode() === 'metrics') return;
+          this.withChart(() => this.renderFields(fields));
+        }
       });
     });
   }
@@ -90,7 +98,13 @@ export class KeyTechnologies implements OnDestroy {
   backToFields(): void {
     this.mode.set('technologies');
     this.closePanels();
-    this.withChart(() => this.renderFields(this.allFields));
+
+    if (this.fieldMode() === 'metrics') {
+      this.selectedField.set(null);
+      this.syncQueryParams();
+    } else {
+      this.withChart(() => this.renderFields(this.allFields));
+    }
   }
 
   setMode(next: Mode): void {
@@ -98,24 +112,50 @@ export class KeyTechnologies implements OnDestroy {
 
     this.mode.set(next);
     this.closePanels();
+    this.syncQueryParams();
 
     const field = this.selectedField();
     if (!field) return;
 
     if (next === 'network') {
       this.resizeObserver?.disconnect();
-      this.syncQueryParams();
     } else {
       this.withChart(() => this.renderTechnologies(field));
     }
   }
 
+  setFieldMode(next: FieldMode): void {
+    if (this.fieldMode() === next) return;
+
+    this.fieldMode.set(next);
+    this.syncQueryParams();
+
+    if (next === 'metrics') {
+      this.resizeObserver?.disconnect();
+    } else {
+      this.withChart(() => this.renderFields(this.allFields));
+    }
+  }
+
+  onFieldSelected(id: string): void {
+    const field = this.allFields.find((f) => f._id.$oid === id);
+    if (!field) return;
+
+    this.mode.set('technologies');
+    this.selectedField.set(field);
+    this.syncQueryParams();
+    this.withChart(() => this.renderTechnologies(field));
+  }
+
   private syncQueryParams(): void {
+    const field = this.selectedField();
+
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
-        field: this.selectedField()?._id.$oid ?? null,
-        mode: this.mode() === 'network' ? 'network' : null,
+        field: field?._id.$oid ?? null,
+        mode: field && this.mode() === 'network' ? 'network' : null,
+        view: this.fieldMode() === 'metrics' ? 'metrics' : null,
       },
       replaceUrl: true,
     });
@@ -136,16 +176,35 @@ export class KeyTechnologies implements OnDestroy {
     this.selectedProject.set(null);
   }
 
-  private withChart(render: () => void): void {
-    setTimeout(() => {
-      const el = document.getElementById('key-technologies');
-      if (!el || !el.clientWidth) return;
+  openOrganisation(id: string): void {
+    this.router.navigate(['/organisation', id], {
+      queryParams: { from: this.router.url, fromLabel: 'Zurück zum Netzwerk' },
+    });
+  }
+
+  openProject(id: string): void {
+    this.router.navigate(['/project', id], {
+      queryParams: { from: this.router.url, fromLabel: 'Zurück zum Netzwerk' },
+    });
+  }
+
+  private withChart(render: () => void, tries = 20): void {
+    const el = document.getElementById('key-technologies');
+
+    if (el && el.clientWidth) {
       this.width = el.clientWidth;
       this.height = el.clientHeight;
       this.initChart();
       render();
       this.attachResizeObserver();
-    });
+      return;
+    }
+
+    if (tries <= 0) {
+      console.warn('withChart: Chart-Div nie erschienen');
+      return;
+    }
+    requestAnimationFrame(() => this.withChart(render, tries - 1));
   }
 
   private attachResizeObserver(): void {
@@ -154,7 +213,7 @@ export class KeyTechnologies implements OnDestroy {
     if (!el) return;
 
     this.resizeObserver = new ResizeObserver(() => {
-      if (this.showNetwork()) return;
+      if (this.showNetwork() || this.showMetrics()) return;
       this.width = el.clientWidth;
       this.height = el.clientHeight;
       this.svg.attr('width', this.width).attr('height', this.height);
@@ -352,7 +411,9 @@ export class KeyTechnologies implements OnDestroy {
 
     this.renderSquares(root.leaves() as D3Node[], (d) => {
       if (d.data.techID) {
-        this.router.navigate(['/key-technologies', d.data.techID]);
+        this.router.navigate(['/key-technologies', d.data.techID], {
+          queryParams: { view: this.fieldMode() === 'metrics' ? 'metrics' : null },
+        });
       }
     });
   }

@@ -12,7 +12,7 @@
         @if (selectedField()) {
           <button
             (click)="backToFields()"
-            class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+            class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
           >
             ← Zurück
           </button>
@@ -51,10 +51,39 @@
             Netzwerk
           </button>
         </div>
+      } @else {
+        <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
+          <button
+            (click)="setFieldMode('tiles')"
+            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+            [class]="
+              fieldMode() === 'tiles'
+                ? 'bg-white text-gray-800 shadow-sm font-medium'
+                : 'text-gray-500 hover:text-gray-700'
+            "
+          >
+            Verteilung
+          </button>
+          <button
+            (click)="setFieldMode('metrics')"
+            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+            [class]="
+              fieldMode() === 'metrics'
+                ? 'bg-white text-gray-800 shadow-sm font-medium'
+                : 'text-gray-500 hover:text-gray-700'
+            "
+          >
+            Kennzahlen
+          </button>
+        </div>
       }
     </div>
 
-    @if (showNetwork()) {
+    @if (showMetrics()) {
+      <div class="flex-1 min-h-0 w-full">
+        <app-metrics (fieldSelected)="onFieldSelected($event)"></app-metrics>
+      </div>
+    } @else if (showNetwork()) {
       <div class="flex-1 min-h-0 w-full relative">
         <app-network
           [filterByField]="selectedField()!._id.$oid"
@@ -69,15 +98,17 @@
             [data]="networkService.data.value() ?? null"
             [filters]="filters()"
             (filtersChange)="filters.set($event)"
-          ></app-network-filter>
+          >
+          </app-network-filter>
         </div>
 
         @if (selectedOrganisation()) {
-          <div class="absolute bottom-3 left-3 z-10 w-72">
+          <div class="absolute bottom-3 left-3 z-10 w-full">
             <app-organisation-detail
               [organisation]="selectedOrganisation()!.organisation"
               [projectCount]="selectedOrganisation()!.projectCount"
               [cooperationCount]="selectedOrganisation()!.cooperationCount"
+              (detailsRequested)="openOrganisation($event)"
               (closed)="closePanels()"
             >
             </app-organisation-detail>
@@ -85,10 +116,11 @@
         }
 
         @if (selectedProject()) {
-          <div class="absolute bottom-3 left-3 z-10 w-80">
+          <div class="absolute bottom-3 left-3 z-10 w-full">
             <app-project-detail
               [selection]="selectedProject()!"
               (closed)="closePanels()"
+              (detailsRequested)="openProject($event)"
             ></app-project-detail>
           </div>
         }

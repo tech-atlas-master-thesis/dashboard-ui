@@ -1,0 +1,274 @@
+<div class="h-full w-full p-5 flex flex-col gap-2">
+  @if (service.data.isLoading()) {
+    <div class="flex-1 flex flex-col items-center justify-center gap-4">
+      <div
+        class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"
+      ></div>
+      <p class="text-gray-400 font-light text-sm">Projekt wird geladen ...</p>
+    </div>
+  } @else if (project(); as p) {
+    <div
+      class="flex-1 min-h-0 flex flex-col gap-6 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div class="shrink-0 flex flex-col gap-3 items-start">
+        <button
+          type="button"
+          (click)="goBack()"
+          class="text-xs text-gray-500 hover:text-gray-900 cursor-pointer"
+        >
+          ← {{ backLabel() }}
+        </button>
+
+        <div
+          class="flex items-start justify-between border-l-4 p-4 rounded-xl"
+          [style.border-color]="projectColor"
+        >
+          <div class="flex flex-col gap-2">
+            <h1 class="text-3xl font-semibold tracking-tight">{{ p.title ?? 'Ohne Titel' }}</h1>
+            <div class="flex items-center gap-2">
+              @if (p.status) {
+                <p
+                  class="text-xs rounded-sm px-4 py-0.5"
+                  [class]="running() ? 'text-green-800 bg-green-100' : 'text-gray-600 bg-gray-100'"
+                >
+                  {{ statusName(p.status) }}
+                </p>
+              }
+            </div>
+
+            <div class="flex flex-wrap gap-x-10 pt-2">
+              @if (p.short) {
+                <div class="flex flex-col gap-0.5">
+                  <p class="text-xs text-gray-500">Kurzbezeichnung</p>
+                  <p class="text-sm">{{ p.short }}</p>
+                </div>
+              }
+              <div class="flex flex-col gap-0.5">
+                <p class="text-xs text-gray-500">Programmlinie</p>
+                <p class="text-sm">{{ p.fundingLine ?? '—' }}</p>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <p class="text-xs text-gray-500">Laufzeit</p>
+                <p class="text-sm tabular-nums">{{ duration() }}</p>
+              </div>
+              @if (p.externalId) {
+                <div class="flex flex-col gap-0.5">
+                  <p class="text-xs text-gray-500">Kennung</p>
+                  <p class="text-sm tabular-nums">{{ p.externalId }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (metrics(); as m) {
+        <div class="shrink-0 grid grid-cols-4 gap-4">
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="projectColor"
+          >
+            <p class="text-xs text-gray-500">Beteiligte</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(m.participants) }}</p>
+          </div>
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="projectColor"
+          >
+            <p class="text-xs text-gray-500">Kooperationen</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(m.cooperations) }}</p>
+          </div>
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="projectColor"
+          >
+            <p class="text-xs text-gray-500">Technologiefelder</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(technologyFields().length) }}</p>
+          </div>
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="projectColor"
+          >
+            <p class="text-xs text-gray-500">Gemeinsame Folgeprojekte</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(recurring().length) }}</p>
+          </div>
+        </div>
+      }
+
+      @if (hasAbstract()) {
+        <div class="shrink-0 flex flex-col gap-2">
+          <p class="text-xs text-gray-500">Kurzbeschreibung</p>
+          <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+            @if (abstractOpen()) {
+              <div class="flex flex-col gap-3">
+                @for (paragraph of paragraphs(); track $index) {
+                  <p class="text-sm text-gray-800">{{ paragraph }}</p>
+                }
+              </div>
+            } @else {
+              <p class="text-sm text-gray-800 line-clamp-3">{{ paragraphs()[0] }}</p>
+            }
+
+            @if (abstractTruncated()) {
+              <button
+                type="button"
+                (click)="toggleAbstract()"
+                class="self-start text-xs text-gray-500 hover:text-gray-900 hover:underline cursor-pointer"
+              >
+                {{ abstractOpen() ? 'Weniger anzeigen' : 'Ganze Beschreibung anzeigen' }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="flex gap-10 flex-1 min-h-0">
+        <div class="w-4/7 shrink-0 flex flex-col gap-10">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline justify-between">
+              <p class="text-xs text-gray-500">Zusammensetzung des Konsortiums</p>
+            </div>
+            <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+              <div class="flex h-6 rounded-xl overflow-hidden">
+                @for (t of typeMix(); track t.type) {
+                  <span
+                    class="block"
+                    [style.width.%]="t.share"
+                    [style.background]="t.color"
+                    [title]="t.name"
+                  ></span>
+                }
+              </div>
+              <div class="flex flex-wrap gap-x-5 gap-y-2">
+                @for (t of typeMix(); track t.type) {
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="w-2.5 h-2.5 rounded-xs" [style.background]="t.color"></span>
+                    <p>{{ t.name }}</p>
+                    <p class="text-gray-500 tabular-nums">{{ int(t.count) }}</p>
+                  </div>
+                }
+              </div>
+              @if (withoutType() > 0) {
+                <p class="text-xs text-gray-500">
+                  Bei {{ int(withoutType()) }} Beteiligten ist kein Organisationstyp hinterlegt.
+                </p>
+              }
+            </div>
+          </div>
+
+          <div class="flex flex-col">
+            <div
+              class="flex items-center gap-3 pb-1.5 border-b border-gray-300 text-xs text-gray-500"
+            >
+              <span class="w-1/3">Organisation</span>
+              <span class="w-1/3">Typ</span>
+              <span class="w-1/6">Ort</span>
+              <span class="w-1/9 text-center">Rolle</span>
+            </div>
+
+            @for (o of participants(); track oid(o._id)) {
+              <div class="flex items-center gap-3 py-2 border-b border-gray-100 hover:bg-gray-50">
+                <div class="w-1/3 min-w-0 flex items-center gap-2">
+                  <span
+                    class="w-2.5 h-2.5 rounded-xs shrink-0"
+                    [style.background]="colorOfType(o.type)"
+                  ></span>
+                  <button
+                    type="button"
+                    (click)="openOrganisation(o)"
+                    class="min-w-0 text-left text-xs cursor-pointer hover:underline truncate"
+                  >
+                    {{ o.name }}
+                  </button>
+                </div>
+                <p class="w-1/3 text-xs text-gray-500 truncate">{{ typeName(o.type) || '—' }}</p>
+                <p class="w-1/6 text-xs text-gray-500 truncate">{{ location(o) }}</p>
+                <div class="w-1/9 text-center text-xs">
+                  @if (o.leading) {
+                    <p class="border border-gray-500 text-gray-700 rounded px-2 py-0.5">Führung</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-5">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline gap-1">
+              <p class="text-xs text-gray-500">Technologiezuordnung</p>
+            </div>
+            <div class="flex flex-col gap-3 border-gray-100 border-t pt-2">
+              @for (group of technologyFields(); track group._id) {
+                <div
+                  class="flex flex-col gap-2 rounded-xl p-2"
+                  [style.background]="group.style?.color ?? '#d1d5db'"
+                >
+                  <button
+                    type="button"
+                    (click)="openField(group)"
+                    class="text-white text-xs font-medium text-left cursor-pointer hover:underline"
+                  >
+                    {{ group.label ?? 'Ohne Feld' }}
+                  </button>
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (t of group.technologies; track oid(t._id)) {
+                      <button
+                        type="button"
+                        (click)="openTechnology(t)"
+                        class="bg-(--tc) text-xs border border-(--ac) rounded px-2 py-0.5 text-white cursor-pointer hover:border-white hover:text-white hover:bg-(--ac)"
+                        [style.--tc]="group.style?.color ?? '#475569'"
+                        [style.--ac]="group.style?.accent ?? '#475569'"
+                      >
+                        {{ t.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <p class="text-xs text-gray-400">Keiner Technologie zugeordnet.</p>
+              }
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline justify-between">
+              <p class="text-xs text-gray-500">Dieses Konsortium arbeitet auch hier</p>
+              <p class="text-xs text-gray-500">gemeinsame Partner</p>
+            </div>
+            <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+              @for (row of recurring(); track row._id) {
+                <button
+                  type="button"
+                  (click)="openProject(row)"
+                  class="flex items-center gap-2 h-5 text-left cursor-pointer hover:underline"
+                >
+                  <span class="flex-1 text-xs truncate">{{ shortLabel(row) }}</span>
+                  <span class="text-xs text-gray-500 tabular-nums">{{ years(row) }}</span>
+                  <span class="w-6 text-right text-xs tabular-nums">{{ int(row.shared) }}</span>
+                </button>
+              } @empty {
+                <p class="text-xs text-gray-400">
+                  Keine weiteren Projekte mit mindestens zwei derselben Organisationen.
+                </p>
+              }
+            </div>
+          </div>
+
+          @if (keywords().length) {
+            <div class="flex flex-col gap-2">
+              <p class="text-xs text-gray-500">Schlagworte</p>
+              <div class="flex flex-wrap gap-1.5 border-gray-100 border-t pt-2">
+                @for (keyword of keywords(); track $index) {
+                  <p class="text-xs bg-gray-100 rounded px-2 py-0.5 text-gray-600">{{ keyword }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="flex-1 flex items-center justify-center text-gray-400">Projekt nicht gefunden.</div>
+  }
+</div>

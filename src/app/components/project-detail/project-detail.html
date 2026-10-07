@@ -1,23 +1,22 @@
 <div
-  class="bg-white backdrop-blur-sm rounded-xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border max-h-80 overflow-y-auto"
+  class="backdrop-blur-sm rounded-xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border"
   [style.border-color]="typeColor"
 >
   <div class="flex justify-between gap-2">
     <p class="text-sm font-medium">{{ selection.project.title || selection.project.short }}</p>
     <button
       (click)="closed.emit()"
-      class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
+      class="text-gray-500 hover:text-gray-700 text-sm cursor-pointer"
     >
       ✕
     </button>
   </div>
 
   <div class="flex items-center gap-2">
-    <span class="w-2.5 h-2.5 rounded-full" [style.background]="typeColor"></span>
     <p class="text-xs text-gray-500">{{ selection.project.short }}</p>
   </div>
 
-  <div class="flex flex-row gap-4 text-xs text-gray-500">
+  <div class="flex flex-row gap-4 text-xs text-gray-500 border-t border-gray-300 pt-2">
     @if (start || end) {
       <p>
         Zeitraum: {{ start ? (start | date: 'MM/yyyy') : '?' }} –
@@ -38,9 +37,13 @@
     }
   </div>
 
-  @if (selection.project.abstract) {
-    <p class="text-xs text-gray-600 border-t border-gray-100 pt-2">
-      {{ selection.project.abstract }}
-    </p>
-  }
+  <button
+    type="button"
+    (click)="openDetails()"
+    class="group flex items-center justify-between mt-2 text-left cursor-pointer rounded-xl p-2"
+    [style.background]="typeColor"
+  >
+    <p class="text-xs font-medium text-white group-hover:underline">Alle Daten zum Projekt</p>
+    <p class="text-xs font-medium text-white">→</p>
+  </button>
 </div>

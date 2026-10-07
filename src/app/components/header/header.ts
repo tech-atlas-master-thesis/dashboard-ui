@@ -4,7 +4,7 @@ import { DatasetSelect } from '../dataset-select/dataset-select';
 
 @Component({
   selector: 'app-header',
-  imports: [RouterModule, DatasetSelect],
+  imports: [RouterModule, DatasetSelect, RouterLink],
   templateUrl: './header.html',
   styleUrl: './header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

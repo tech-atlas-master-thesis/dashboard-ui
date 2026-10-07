@@ -1,0 +1,279 @@
+<div class="h-full w-full p-5 flex flex-col gap-2">
+  @if (service.data.isLoading()) {
+    <div class="flex-1 flex flex-col items-center justify-center gap-4">
+      <div
+        class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"
+      ></div>
+      <p class="text-gray-400 font-light text-sm">Organisation wird geladen ...</p>
+    </div>
+  } @else if (organisation(); as org) {
+    <div
+      class="flex-1 min-h-0 flex flex-col gap-6 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div class="shrink-0 flex flex-col gap-3 items-start">
+        <button
+          type="button"
+          (click)="goBack()"
+          class="text-xs text-gray-500 hover:text-gray-900 cursor-pointer"
+        >
+          ← {{ backLabel() }}
+        </button>
+
+        <div
+          class="flex items-start justify-between border-l-4 p-4 rounded-xl"
+          [style.border-color]="typeColor()"
+        >
+          <div class="flex flex-col gap-2">
+            <h1 class="text-3xl font-semibold tracking-tight">{{ org.name }}</h1>
+            <div class="flex items-center">
+              @if (org.type) {
+                <p class="text-xs text-white rounded px-2 py-0.5" [style.background]="typeColor()">
+                  {{ typeName(org.type) }}
+                </p>
+              }
+            </div>
+
+            @if (addressLines().length || org.website || org.firmenbuchnummer || org.ror) {
+              <div class="flex flex-wrap gap-x-10 pt-2">
+                @if (addressLines().length) {
+                  <div class="flex flex-col gap-0.5">
+                    <p class="text-xs text-gray-500">Anschrift</p>
+                    <p class="text-sm">{{ addressLines().join(', ') }}</p>
+                  </div>
+                }
+                @if (org.website) {
+                  <div class="flex flex-col gap-0.5">
+                    <p class="text-xs text-gray-500">Website</p>
+                    <a
+                      [href]="org.website"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-sm hover:underline"
+                    >
+                      {{ org.website }}
+                    </a>
+                  </div>
+                }
+                @if (org.firmenbuchnummer) {
+                  <div class="flex flex-col gap-0.5">
+                    <p class="text-xs text-gray-500">Firmenbuchnummer</p>
+                    <p class="text-sm tabular-nums">{{ org.firmenbuchnummer }}</p>
+                  </div>
+                }
+                @if (org.ror) {
+                  <div class="flex flex-col gap-0.5">
+                    <p class="text-xs text-gray-500">ROR</p>
+                    <a
+                      [href]="'https://ror.org/' + org.ror"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-sm tabular-nums hover:underline"
+                    >
+                      {{ org.ror }}
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (metrics(); as m) {
+        <div class="shrink-0 grid grid-cols-4 gap-4">
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="typeColor()"
+          >
+            <p class="text-xs text-gray-500">Projekte</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(m.projects) }}</p>
+          </div>
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="typeColor()"
+          >
+            <p class="text-xs text-gray-500">Partner insgesamt</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(m.partnersTotal) }}</p>
+          </div>
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="typeColor()"
+          >
+            <p class="text-xs text-gray-500">Ø Partner je Projekt</p>
+            <p class="text-xl font-medium tabular-nums">{{ dec(m.partnersMean) }}</p>
+          </div>
+          <div
+            class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm"
+            [style.border-color]="typeColor()"
+          >
+            <p class="text-xs text-gray-500">Laufende Projekte</p>
+            <p class="text-xl font-medium tabular-nums">{{ int(running()) }}</p>
+          </div>
+        </div>
+      }
+
+      <div class="flex gap-10 flex-1 min-h-0">
+        <div class="w-4/7 shrink-0 flex flex-col gap-10">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline gap-1">
+              <p class="text-xs text-gray-500">Tätigkeitsfelder</p>
+              @if (metrics(); as m) {
+                <p class="text-xs text-gray-400 tabular-nums">
+                  ({{ m.fields }} von {{ m.fieldsTotal }})
+                </p>
+              }
+            </div>
+            <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+              @for (f of fields(); track f._id) {
+                <div class="flex items-center gap-2 h-5">
+                  <span
+                    class="w-2.5 h-2.5 rounded-xl shrink-0"
+                    [style.background]="fieldColor(f)"
+                  ></span>
+                  <button
+                    type="button"
+                    (click)="openField(f)"
+                    class="w-1/2 text-xs text-left truncate cursor-pointer hover:underline"
+                  >
+                    {{ f.label }}
+                  </button>
+                  <span class="w-1/2 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <span
+                      class="block h-2 rounded-full"
+                      [style.width]="barWidth(f.projects)"
+                      [style.background]="fieldColor(f)"
+                    ></span>
+                  </span>
+                  <p class="w-10 text-right text-xs tabular-nums">{{ int(f.projects) }}</p>
+                  <p class="w-12 text-right text-xs tabular-nums text-gray-500">
+                    ({{ fieldShare(f) }})
+                  </p>
+                </div>
+              } @empty {
+                <p class="text-[13px] text-gray-400">Keine Feldzuordnung vorhanden.</p>
+              }
+            </div>
+          </div>
+
+          <div class="flex flex-col">
+            <div
+              class="flex items-center gap-3 pb-1.5 border-b border-gray-300 text-xs text-gray-500"
+            >
+              <span class="w-1/3">Projekt</span>
+              <span class="w-1/3">Programmlinie</span>
+              <span class="w-1/9 text-center">Laufzeit</span>
+              <span class="w-1/9 text-center">Partner</span>
+              <span class="w-1/9 text-center">Rolle</span>
+            </div>
+
+            @for (p of projects(); track p._id) {
+              <div class="flex items-center gap-3 py-2 border-b border-gray-100 hover:bg-gray-50">
+                <button
+                  type="button"
+                  (click)="openProject(p)"
+                  class="w-1/3 min-w-0 text-left text-xs cursor-pointer hover:underline truncate"
+                >
+                  {{ label(p) }}
+                </button>
+                <p class="w-1/3 text-xs text-gray-500 truncate">{{ p.fundingLine ?? '—' }}</p>
+                <p class="w-1/9 text-center text-xs text-gray-500 tabular-nums">{{ period(p) }}</p>
+                <p class="w-1/9 text-center text-xs tabular-nums">{{ int(p.partners) }}</p>
+                <p class="w-1/9 text-center text-xs">
+                  @if (p.leading) {
+                    <p class="border border-gray-500 text-gray-700 rounded px-2 py-0.5">Führung</p>
+                  }
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-5">
+          @if (metrics(); as m) {
+            <div class="flex flex-col gap-2">
+              <p class="text-xs text-gray-500">Rolle in den Konsortien</p>
+              <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+                <div class="flex h-6 rounded-xl overflow-hidden bg-gray-300">
+                  <span
+                    class="block"
+                    [style.width.%]="m.projects ? (m.leadingProjects / m.projects) * 100 : 0"
+                    [style.background]="typeColor()"
+                  ></span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-xs" [style.background]="typeColor()"></span>
+                    <p>Konsortialführung</p>
+                    <p class="text-gray-500 tabular-nums">{{ int(m.leadingProjects) }}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-xs bg-gray-300"></span>
+                    <p>Partner</p>
+                    <p class="text-gray-500 tabular-nums">
+                      {{ int(m.projects - m.leadingProjects) }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline justify-between">
+              <p class="text-xs text-gray-500">Häufigste Partner</p>
+              <p class="text-xs text-gray-500">gemeinsame Projekte</p>
+            </div>
+            <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+              <div class="flex flex-col gap-2">
+                @for (o of partners(); track oid(o._id)) {
+                  <div class="flex items-center gap-2 h-5">
+                    <span
+                      class="w-2.5 h-2.5 rounded-xs shrink-0"
+                      [style.background]="colorOfType(o.type)"
+                    ></span>
+                    <button
+                      type="button"
+                      (click)="openPartner(oid(o._id))"
+                      class="flex-1 text-xs text-left truncate cursor-pointer hover:underline"
+                    >
+                      {{ o.name }}
+                    </button>
+                    <p class="text-xs tabular-nums">{{ int(o.sharedProjects) }}</p>
+                  </div>
+                } @empty {
+                  <p class="text-xs text-gray-400">Keine Partner — alle Projekte allein.</p>
+                }
+              </div>
+            </div>
+          </div>
+
+          @if (programmes().length) {
+            <div class="flex flex-col gap-2">
+              <p class="text-xs text-gray-500">Programmlinien</p>
+              <div class="flex flex-col gap-2 border-gray-100 border-t pt-2">
+                <div class="flex flex-col gap-2">
+                  @for (p of programmes(); track p.name) {
+                    <div class="flex items-center gap-2 h-5">
+                      <span class="flex-1 text-xs truncate">{{ p.name }}</span>
+                      <span class="w-1/4 h-2 bg-gray-100 rounded-xl overflow-hidden">
+                        <span
+                          class="block h-2 rounded-xl bg-gray-400"
+                          [style.width]="programmeBarWidth(p.projects)"
+                        ></span>
+                      </span>
+                      <p class="w-4 text-right text-xs tabular-nums">{{ int(p.projects) }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="flex-1 flex items-center justify-center text-gray-400">
+      Organisation nicht gefunden.
+    </div>
+  }
+</div>

@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 import { Home } from './routes/home/home';
-import { Map } from './components/map/map';
 import { KeyTechnologies } from './routes/key-technologies/key-technologies';
 import { KeyTechnologyDetail } from './routes/key-technology-detail/key-technology-detail';
+import { Organisation } from './routes/organisation/organisation';
+import { Project } from './routes/project/project';
 
 export const routes: Routes = [
   {
@@ -18,7 +19,15 @@ export const routes: Routes = [
     component: KeyTechnologyDetail,
   },
   {
+    path: 'organisation/:id',
+    component: Organisation,
+  },
+  {
+    path: 'project/:id',
+    component: Project,
+  },
+  {
     path: '**',
-    redirectTo: 'home',
+    redirectTo: '',
   },
 ];

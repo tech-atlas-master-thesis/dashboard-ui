@@ -18,16 +18,20 @@ export class DatasetsState {
     () => this.getDefaultPipeline(this.pipelines.value()) ?? '',
   );
 
-  datasets = httpResource<DataSetModel[]>(() =>
-    this.datasetsApi.getDataSetsUrl(this.selectedPipeline()),
+  datasets = httpResource<DataSetModel[]>(
+    () =>
+      this.selectedPipeline() === ''
+        ? undefined
+        : this.datasetsApi.getDataSetsUrl(this.selectedPipeline()),
+    { defaultValue: [] },
   );
 
-  selectedDataset = linkedSignal<string>(() => this.datasets.value()?.at(0)?._id ?? '');
+  selectedDataset = linkedSignal<string>(() => this.datasets.value().at(0)?._id ?? '');
 
   private getDefaultPipeline(pipelines: string[]): string | undefined {
-    if (pipelines.length === 1) {
-      return pipelines.at(0);
+    if (pipelines.length === 0) {
+      return undefined;
     }
-    return pipelines.includes(this.DEFAULT_PIPELINE) ? this.DEFAULT_PIPELINE : undefined;
+    return pipelines.includes(this.DEFAULT_PIPELINE) ? this.DEFAULT_PIPELINE : pipelines.at(0);
   }
 }

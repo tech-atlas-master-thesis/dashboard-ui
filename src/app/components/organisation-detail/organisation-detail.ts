@@ -16,9 +16,14 @@ export class OrganisationDetail {
   @Input() projectCount: number | null = null;
   @Input() cooperationCount: number | null = null;
   @Output() closed = new EventEmitter<void>();
+  @Output() detailsRequested = new EventEmitter<string>();
 
   get typeColor(): string {
     return organisationColor(this.organisation.type);
+  }
+
+  openDetails(): void {
+    this.detailsRequested.emit(this.organisation._id.$oid);
   }
 
   protected readonly organisationTypeName = organisationTypeName;

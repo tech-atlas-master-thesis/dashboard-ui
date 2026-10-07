@@ -1,12 +1,12 @@
 <div
-  class="bg-white backdrop-blur-sm rounded-xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border"
+  class="backdrop-blur-sm rounded-xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border"
   [style.border-color]="typeColor"
 >
   <div class="flex justify-between">
     <p class="text-sm font-medium">{{ organisation.name }}</p>
     <button
       (click)="closed.emit()"
-      class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
+      class="text-gray-500 hover:text-gray-700 text-sm cursor-pointer"
     >
       ✕
     </button>
@@ -18,19 +18,29 @@
   </div>
 
   @if (projectCount !== null || cooperationCount !== null) {
-    <div class="flex items-start gap-6 border-t border-gray-100 pt-2">
+    <div class="flex items-start gap-6 border-t border-gray-300 pt-2">
       @if (projectCount !== null) {
         <div class="flex flex-col">
           <p class="text-lg font-light">{{ projectCount }}</p>
-          <p class="text-xs text-gray-400">{{ projectCount === 1 ? 'Projekt' : 'Projekte' }}</p>
+          <p class="text-xs text-gray-500">{{ projectCount === 1 ? 'Projekt' : 'Projekte' }}</p>
         </div>
       }
       @if (cooperationCount !== null) {
         <div class="flex flex-col">
           <p class="text-lg font-light">{{ cooperationCount }}</p>
-          <p class="text-xs text-gray-400">Partner</p>
+          <p class="text-xs text-gray-500">Partner</p>
         </div>
       }
     </div>
   }
+
+  <button
+    type="button"
+    (click)="openDetails()"
+    class="group flex items-center justify-between mt-2 text-left cursor-pointer rounded-xl p-2"
+    [style.background]="typeColor"
+  >
+    <p class="text-xs font-medium text-white group-hover:underline">Alle Daten zur Organisation</p>
+    <p class="text-xs font-medium text-white">→</p>
+  </button>
 </div>
