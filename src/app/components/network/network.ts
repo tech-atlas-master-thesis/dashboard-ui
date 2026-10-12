@@ -21,7 +21,7 @@ import {
 } from '@shared/backend/models/network.model';
 import { NetworkService } from '@shared/backend/services/network-service';
 import * as d3 from 'd3';
-import { matchesFilters } from '@shared/backend/utils/network-filter.utils';
+import { NO_VALUE, matchesFilters } from '@shared/backend/utils/network-filter.utils';
 
 @Component({
   selector: 'app-network',
@@ -115,58 +115,65 @@ export class Network implements OnDestroy {
   }
 
   private buildGraph(data: NetworkData, filters: NetworkFilters): void {
-    const projects = (data.projects ?? []).filter((p) => matchesFilters(p, filters));
-    const projectsByOrg = new Map<string, Project[]>();
+    const types = filters.organisationTypes;
 
-    projects.forEach((p) =>
-      p.organisations.forEach((id) => {
+    const allowed = new Set(
+      data.nodes
+        .filter((n) => types.length === 0 || types.includes(n.type || NO_VALUE))
+        .map((n) => n._id.$oid),
+    );
+
+    const entries = (data.projects ?? [])
+      .filter((p) => matchesFilters(p, filters))
+      .map((p) => ({ project: p, members: p.organisations.filter((id) => allowed.has(id)) }))
+      .filter((e) => types.length === 0 || e.members.length > 0);
+
+    const projectsByOrg = new Map<string, Project[]>();
+    entries.forEach((e) =>
+      e.members.forEach((id) => {
         if (!projectsByOrg.has(id)) projectsByOrg.set(id, []);
-        projectsByOrg.get(id)!.push(p);
+        projectsByOrg.get(id)!.push(e.project);
       }),
     );
 
-    const orgCounts = data.nodes.map((n) => projectsByOrg.get(n._id.$oid)?.length ?? 0);
+    const orgCounts = [...allowed].map((id) => projectsByOrg.get(id)?.length ?? 0);
     const orgRadius = d3
       .scaleSqrt()
       .domain([1, d3.max(orgCounts) || 1])
       .range([5, 24])
       .clamp(true);
 
-    const orgNodes: NetworkNode[] = data.nodes.map((n) => {
-      const count = projectsByOrg.get(n._id.$oid)?.length ?? 0;
-      return {
-        id: n._id.$oid,
-        nodeType: 'org',
-        name: n.name,
-        type: n.type,
-        organisation: n,
-        count,
-        r: orgRadius(count),
-        x: 0,
-        y: 0,
-      };
-    });
+    const activeOrgs: NetworkNode[] = data.nodes
+      .filter((n) => allowed.has(n._id.$oid) && (projectsByOrg.get(n._id.$oid)?.length ?? 0) > 0)
+      .map((n) => {
+        const count = projectsByOrg.get(n._id.$oid)!.length;
+        return {
+          id: n._id.$oid,
+          nodeType: 'org',
+          name: n.name,
+          type: n.type,
+          organisation: n,
+          count,
+          r: orgRadius(count),
+          x: 0,
+          y: 0,
+        };
+      });
 
-    orgNodes.forEach((n) => {
-      n.count = projectsByOrg.get(n.id)?.length ?? 0;
-      n.r = orgRadius(n.count);
-    });
-
-    const activeOrgs = orgNodes.filter((n) => n.count > 0);
-    const sizes = projects.map((p) => p.organisations.length);
+    const sizes = entries.map((e) => e.members.length);
     const projRadius = d3
       .scaleSqrt()
       .domain([2, d3.max(sizes) || 2])
       .range([6, 22])
       .clamp(true);
 
-    const projectNodes: NetworkNode[] = projects.map((p) => ({
-      id: `p:${p._id}`,
+    const projectNodes: NetworkNode[] = entries.map((e) => ({
+      id: `p:${e.project._id}`,
       nodeType: 'project',
-      name: p.short || p.title || p.externalId || '—',
-      project: p,
-      count: p.organisations.length,
-      r: projRadius(p.organisations.length),
+      name: e.project.short || e.project.title || e.project.externalId || '—',
+      project: e.project,
+      count: e.members.length,
+      r: projRadius(e.members.length),
       x: 0,
       y: 0,
     }));
@@ -175,9 +182,9 @@ export class Network implements OnDestroy {
     this.byId = new Map(this.nodes.map((n) => [n.id, n]));
 
     this.links = [];
-    projects.forEach((p) => {
-      const project = this.byId.get(`p:${p._id}`)!;
-      p.organisations.forEach((orgId) => {
+    entries.forEach((e) => {
+      const project = this.byId.get(`p:${e.project._id}`)!;
+      e.members.forEach((orgId) => {
         const org = this.byId.get(orgId);
         if (org) this.links.push({ source: org, target: project });
       });
@@ -494,8 +501,6 @@ export class Network implements OnDestroy {
     this.sizeProjectLabels();
     (document as any).fonts?.ready?.then(() => this.sizeProjectLabels());
     requestAnimationFrame(() => this.sizeProjectLabels());
-
-    this.applyFilter();
   }
 
   private sizeProjectLabels(): void {
@@ -565,7 +570,6 @@ export class Network implements OnDestroy {
     this.nodeSel.attr('opacity', 1);
     this.linkSel.attr('stroke-opacity', 0.16).attr('stroke', '#64748b');
     this.labelSel.attr('opacity', (n: NetworkNode) => (this.labelVisible(n) ? 1 : 0));
-    this.applyFilter();
   }
 
   private select(d: NetworkNode): void {
@@ -613,19 +617,6 @@ export class Network implements OnDestroy {
     this.nodeSelected.emit(null);
     this.projectSelected.emit(null);
     this.restore();
-  }
-
-  private applyFilter(): void {
-    if (!this.nodeSel) return;
-    const types = this._filters().organisationTypes;
-    const ok = (n: NetworkNode) =>
-      n.nodeType === 'project' || types.length === 0 || types.includes(n.type ?? '');
-
-    this.nodeSel.style('display', (n: NetworkNode) => (ok(n) ? null : 'none'));
-    this.labelSel.style('display', (n: NetworkNode) => (ok(n) ? null : 'none'));
-    this.linkSel.style('display', (l: NetworkLink) =>
-      ok(l.source) && ok(l.target) ? null : 'none',
-    );
   }
 
   private fitToView(): void {

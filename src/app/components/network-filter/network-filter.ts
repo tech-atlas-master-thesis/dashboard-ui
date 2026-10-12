@@ -15,7 +15,23 @@ import {
   projectStatusName,
   organisationTypeName,
 } from '@shared/backend/models/network.model';
-import { matchesFilters } from '@shared/backend/utils/network-filter.utils';
+import { NO_VALUE, matchesFilters } from '@shared/backend/utils/network-filter.utils';
+
+export type Facet = 'date' | 'statuses' | 'organisationTypes' | 'programmes';
+
+type ListFacet = 'statuses' | 'organisationTypes' | 'programmes';
+
+type ProjectFacet = Parameters<typeof matchesFilters>[2];
+
+type CountFacet = NonNullable<ProjectFacet> | 'organisationTypes';
+
+const NO_VALUE_LABEL: Record<ListFacet, string> = {
+  statuses: 'Ohne Status',
+  organisationTypes: 'Ohne Typ',
+  programmes: 'Ohne Programmlinie',
+};
+
+const byCount = (a: { count: number }, b: { count: number }) => b.count - a.count;
 
 @Component({
   selector: 'app-network-filter',
@@ -37,19 +53,42 @@ export class NetworkFilter {
 
   current = computed(() => this._filters());
 
-  private projectsExcept(facet: Parameters<typeof matchesFilters>[2]) {
+  private readonly allowedOrgIds = computed(() => {
+    const types = this._filters().organisationTypes;
+    if (!types.length) return null;
+    return new Set(
+      (this._data()?.nodes ?? [])
+        .filter((n) => types.includes(n.type || NO_VALUE))
+        .map((n) => n._id.$oid),
+    );
+  });
+
+  private survivingProjects(except?: CountFacet) {
     const projects = this._data()?.projects ?? [];
     const f = this._filters();
-    return projects.filter((p) => matchesFilters(p, f, facet));
+
+    const projectFacet: ProjectFacet = except === 'organisationTypes' ? undefined : except;
+    const base = projects.filter((p) => matchesFilters(p, f, projectFacet));
+
+    if (except === 'organisationTypes') return base;
+
+    const allowed = this.allowedOrgIds();
+    if (!allowed) return base;
+
+    return base.filter((p) => p.organisations.some((id) => allowed.has(id)));
   }
 
-  open = signal(false);
+  readonly openFacet = signal<Facet | null>(null);
 
-  toggleOpen(): void {
-    this.open.update((v) => !v);
+  toggleFacet(facet: Facet): void {
+    this.openFacet.update((open) => (open === facet ? null : facet));
   }
 
-  activeCount = computed(() => {
+  closeMenu(): void {
+    this.openFacet.set(null);
+  }
+
+  private readonly activeCount = computed(() => {
     const f = this._filters();
     return (
       (f.programmes.length ? 1 : 0) +
@@ -59,44 +98,160 @@ export class NetworkFilter {
     );
   });
 
+  readonly filtered = computed(() => this.activeCount() > 0);
+
+  private readonly matched = computed(() => this.survivingProjects());
+
+  readonly matchedProjects = computed(() => this.matched().length);
+
+  readonly totalProjects = computed(() => this._data()?.projects.length ?? 0);
+
   programmes = computed(() => {
-    const map = new Map<string, string>();
-    this.projectsExcept('programmes').forEach((p) => {
-      if (p.programme) map.set(p.programme._id, p.programme.name);
-    });
-    this._data()?.projects.forEach((p) => {
-      if (p.programme && this._filters().programmes.includes(p.programme._id)) {
-        map.set(p.programme._id, p.programme.name);
-      }
-    });
-    return [...map]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const names = new Map<string, string>();
+    const counts = new Map<string, number>();
+
+    for (const project of this.survivingProjects('programmes')) {
+      const id = project.programme?._id ?? NO_VALUE;
+      names.set(id, project.programme?.name ?? NO_VALUE_LABEL.programmes);
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+
+    for (const id of this._filters().programmes) {
+      if (counts.has(id)) continue;
+      const name = (this._data()?.projects ?? []).find((p) => p.programme?._id === id)?.programme
+        ?.name;
+      names.set(id, name ?? NO_VALUE_LABEL.programmes);
+      counts.set(id, 0);
+    }
+
+    return [...names]
+      .map(([key, name]) => ({ id: key, key, name, count: counts.get(key) ?? 0 }))
+      .sort((a, b) => byCount(a, b) || a.name.localeCompare(b.name));
   });
 
   statuses = computed(() => {
-    const set = new Set<string>();
-    this.projectsExcept('statuses').forEach((p) => {
-      if (p.status) set.add(p.status);
-    });
-    this._filters().statuses.forEach((s) => set.add(s));
-    return [...set].sort().map((t) => ({ key: t, label: projectStatusName(t) }));
+    const counts = new Map<string, number>();
+
+    for (const project of this.survivingProjects('statuses')) {
+      const key = project.status || NO_VALUE;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    for (const status of this._filters().statuses) {
+      if (!counts.has(status)) counts.set(status, 0);
+    }
+
+    return [...counts]
+      .map(([key, count]) => ({
+        key,
+        label: key === NO_VALUE ? NO_VALUE_LABEL.statuses : projectStatusName(key),
+        count,
+      }))
+      .sort((a, b) => byCount(a, b) || a.label.localeCompare(b.label));
   });
 
   organisationTypes = computed(() => {
     const active = new Set<string>();
-    this.projectsExcept(undefined).forEach((p) => p.organisations.forEach((id) => active.add(id)));
+    for (const project of this.survivingProjects('organisationTypes')) {
+      for (const id of project.organisations) active.add(id);
+    }
 
-    const set = new Set<string>();
-    this._data()?.nodes.forEach((n) => {
-      if (n.type && active.has(n._id.$oid)) set.add(n.type);
-    });
-    this._filters().organisationTypes.forEach((t) => set.add(t));
+    const counts = new Map<string, number>();
+    for (const node of this._data()?.nodes ?? []) {
+      if (!active.has(node._id.$oid)) continue;
+      const key = node.type || NO_VALUE;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    for (const type of this._filters().organisationTypes) {
+      if (!counts.has(type)) counts.set(type, 0);
+    }
 
-    return [...set]
-      .sort()
-      .map((t) => ({ key: t, label: organisationTypeName(t), color: organisationColor(t) }));
+    return [...counts]
+      .map(([key, count]) => ({
+        key,
+        label: key === NO_VALUE ? NO_VALUE_LABEL.organisationTypes : organisationTypeName(key),
+        color: key === NO_VALUE ? '#d1d5db' : organisationColor(key),
+        count,
+      }))
+      .sort((a, b) => byCount(a, b) || a.label.localeCompare(b.label));
   });
+
+  private readonly maxProgramme = computed(() =>
+    Math.max(1, ...this.programmes().map((p) => p.count)),
+  );
+
+  private readonly maxStatus = computed(() => Math.max(1, ...this.statuses().map((s) => s.count)));
+
+  private readonly maxType = computed(() =>
+    Math.max(1, ...this.organisationTypes().map((t) => t.count)),
+  );
+
+  programmeWidth(count: number): string {
+    return `${Math.round((count / this.maxProgramme()) * 100)}%`;
+  }
+
+  statusWidth(count: number): string {
+    return `${Math.round((count / this.maxStatus()) * 100)}%`;
+  }
+
+  typeWidth(count: number): string {
+    return `${Math.round((count / this.maxType()) * 100)}%`;
+  }
+
+  facetSummary(facet: Facet): string {
+    const f = this._filters();
+
+    if (facet === 'date') return this.dateLabel();
+
+    const chosen = f[facet];
+    if (!chosen.length) return '';
+
+    const total = this.optionCount(facet);
+    if (chosen.length === 1) return this.nameOf(facet, chosen[0]);
+    return `${chosen.length} von ${total}`;
+  }
+
+  private optionCount(facet: ListFacet): number {
+    if (facet === 'statuses') return this.statuses().length;
+    if (facet === 'organisationTypes') return this.organisationTypes().length;
+    return this.programmes().length;
+  }
+
+  private nameOf(facet: ListFacet, value: string): string {
+    if (value === NO_VALUE) return NO_VALUE_LABEL[facet];
+    if (facet === 'statuses') return projectStatusName(value);
+    if (facet === 'organisationTypes') return organisationTypeName(value);
+    return this.programmes().find((p) => p.id === value)?.name ?? value;
+  }
+
+  readonly chosenTypeColors = computed(() =>
+    this._filters()
+      .organisationTypes.slice(0, 3)
+      .map((type) => (type === NO_VALUE ? '#d1d5db' : organisationColor(type))),
+  );
+
+  isSet(facet: Facet): boolean {
+    const f = this._filters();
+    if (facet === 'date') return !!(f.dateFrom || f.dateTo);
+    return f[facet].length > 0;
+  }
+
+  private readonly dateLabel = computed(() => {
+    const f = this._filters();
+    const from = f.dateFrom ? f.dateFrom.slice(0, 4) : null;
+    const to = f.dateTo ? f.dateTo.slice(0, 4) : null;
+    if (from && to) return `${from} – ${to}`;
+    if (from) return `ab ${from}`;
+    if (to) return `bis ${to}`;
+    return '';
+  });
+
+  clear(facet: Facet): void {
+    if (facet === 'date') {
+      this.clearDates();
+      return;
+    }
+    this.clearFacet(facet);
+  }
 
   private toggleIn(list: string[], all: string[], value: string): string[] {
     const next = new Set(list.length === 0 ? all : list);
@@ -148,6 +303,14 @@ export class NetworkFilter {
     });
   }
 
+  only(facet: ListFacet, value: string): void {
+    this.filtersChange.emit({ ...this._filters(), [facet]: [value] });
+  }
+
+  clearFacet(facet: ListFacet): void {
+    this.filtersChange.emit({ ...this._filters(), [facet]: [] });
+  }
+
   setDateFrom(value: string): void {
     this.filtersChange.emit({ ...this._filters(), dateFrom: value || null });
   }
@@ -156,10 +319,16 @@ export class NetworkFilter {
     this.filtersChange.emit({ ...this._filters(), dateTo: value || null });
   }
 
+  private clearDates(): void {
+    this.filtersChange.emit({ ...this._filters(), dateFrom: null, dateTo: null });
+  }
+
   reset(): void {
+    this.closeMenu();
     this.filtersChange.emit(emptyFilters());
   }
 
-  protected readonly projectStatusName = projectStatusName;
-  protected readonly organisationTypeName = organisationTypeName;
+  int(value: number | null | undefined): string {
+    return (value ?? 0).toLocaleString('de-AT');
+  }
 }

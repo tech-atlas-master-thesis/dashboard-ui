@@ -1,4 +1,4 @@
-<div class="h-full w-full p-5 flex flex-col gap-2">
+<div class="h-full w-full p-3 flex flex-col gap-2">
   @if (keyTechnologyService.data.isLoading()) {
     <div class="flex-1 flex flex-col items-center justify-center gap-4">
       <div
@@ -7,7 +7,7 @@
       <p class="text-gray-400 font-light text-sm">Wird geladen ...</p>
     </div>
   } @else {
-    <div class="flex items-center justify-between shrink-0 h-2 px-3">
+    <div class="flex items-center justify-between gap-4 shrink-0 h-8 px-3">
       <div class="flex items-center gap-4">
         @if (selectedField()) {
           <button
@@ -18,7 +18,7 @@
           </button>
           <div class="w-px h-5 bg-gray-300"></div>
           <p
-            class="text-xs font-medium px-2 py-1 rounded-full text-white"
+            class="text-xs font-medium px-2 py-1 rounded-2xl text-white"
             [style.background]="selectedField()!.style.color"
           >
             {{ selectedField()!.label }}
@@ -26,57 +26,68 @@
         }
       </div>
 
-      @if (selectedField()) {
-        <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
-          <button
-            (click)="setMode('technologies')"
-            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-            [class]="
-              mode() === 'technologies'
-                ? 'bg-white text-gray-800 shadow-sm font-medium'
-                : 'text-gray-500 hover:text-gray-700'
-            "
+      <div class="flex items-center gap-4 shrink-0">
+        @if (showNetwork()) {
+          <app-network-filter
+            [data]="networkService.data.value() ?? null"
+            [filters]="filters()"
+            (filtersChange)="filters.set($event)"
           >
-            Technologien
-          </button>
-          <button
-            (click)="setMode('network')"
-            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-            [class]="
-              mode() === 'network'
-                ? 'bg-white text-gray-800 shadow-sm font-medium'
-                : 'text-gray-500 hover:text-gray-700'
-            "
-          >
-            Netzwerk
-          </button>
-        </div>
-      } @else {
-        <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
-          <button
-            (click)="setFieldMode('tiles')"
-            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-            [class]="
-              fieldMode() === 'tiles'
-                ? 'bg-white text-gray-800 shadow-sm font-medium'
-                : 'text-gray-500 hover:text-gray-700'
-            "
-          >
-            Verteilung
-          </button>
-          <button
-            (click)="setFieldMode('metrics')"
-            class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-            [class]="
-              fieldMode() === 'metrics'
-                ? 'bg-white text-gray-800 shadow-sm font-medium'
-                : 'text-gray-500 hover:text-gray-700'
-            "
-          >
-            Kennzahlen
-          </button>
-        </div>
-      }
+          </app-network-filter>
+        }
+
+        @if (selectedField()) {
+          <div class="flex items-center gap-1 bg-gray-100 rounded-2xl p-0.5 shrink-0">
+            <button
+              (click)="setMode('technologies')"
+              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+              [class]="
+                mode() === 'technologies'
+                  ? 'bg-white text-gray-800 shadow-sm font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              "
+            >
+              Technologien
+            </button>
+            <button
+              (click)="setMode('network')"
+              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+              [class]="
+                mode() === 'network'
+                  ? 'bg-white text-gray-800 shadow-sm font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              "
+            >
+              Netzwerk
+            </button>
+          </div>
+        } @else {
+          <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
+            <button
+              (click)="setFieldMode('tiles')"
+              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+              [class]="
+                fieldMode() === 'tiles'
+                  ? 'bg-white text-gray-800 shadow-sm font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              "
+            >
+              Verteilung
+            </button>
+            <button
+              (click)="setFieldMode('metrics')"
+              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+              [class]="
+                fieldMode() === 'metrics'
+                  ? 'bg-white text-gray-800 shadow-sm font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              "
+            >
+              Kennzahlen
+            </button>
+          </div>
+        }
+      </div>
     </div>
 
     @if (showMetrics()) {
@@ -93,17 +104,8 @@
         >
         </app-network>
 
-        <div class="absolute top-3 right-3 z-10">
-          <app-network-filter
-            [data]="networkService.data.value() ?? null"
-            [filters]="filters()"
-            (filtersChange)="filters.set($event)"
-          >
-          </app-network-filter>
-        </div>
-
         @if (selectedOrganisation()) {
-          <div class="absolute bottom-3 left-3 z-10 w-full">
+          <div class="absolute bottom-3 inset-x-0 z-10 px-3">
             <app-organisation-detail
               [organisation]="selectedOrganisation()!.organisation"
               [projectCount]="selectedOrganisation()!.projectCount"
@@ -116,7 +118,7 @@
         }
 
         @if (selectedProject()) {
-          <div class="absolute bottom-3 left-3 z-10 w-full">
+          <div class="absolute bottom-3 inset-x-0 z-10 px-3">
             <app-project-detail
               [selection]="selectedProject()!"
               (closed)="closePanels()"

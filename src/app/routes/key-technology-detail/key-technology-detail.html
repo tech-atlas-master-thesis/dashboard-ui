@@ -1,4 +1,4 @@
-<div class="h-full w-full bg-white rounded-3xl p-5 flex flex-col gap-2">
+<div class="h-full w-full bg-white p-3 flex flex-col gap-2">
   @if (service.data.isLoading()) {
     <div class="flex-1 flex items-center justify-center">
       <div
@@ -6,17 +6,24 @@
       ></div>
     </div>
   } @else if (technology()) {
-    <div class="flex items-center gap-4 shrink-0 pl-3 h-2">
+    <div class="flex items-center gap-4 shrink-0 h-8 px-3">
       <button (click)="goBack()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">
-        ← Zurück
+        ← {{ backLabel() }}
       </button>
       <div class="w-px h-5 bg-gray-300"></div>
       <p
-        class="text-xs font-medium px-2 py-1 rounded-full text-white"
+        class="text-xs font-medium px-2 py-1 rounded-2xl text-white"
         [style.background]="field()!.style.color"
       >
         {{ field()!.label }} → {{ technology()!.label }}
       </p>
+
+      <app-network-filter
+        class="ml-auto"
+        [data]="networkService.data.value() ?? null"
+        [filters]="filters()"
+        (filtersChange)="filters.set($event)"
+      ></app-network-filter>
     </div>
 
     <div class="flex-1 min-h-0 relative">
@@ -28,17 +35,8 @@
       >
       </app-network>
 
-      <div class="absolute top-3 right-3 z-10">
-        <app-network-filter
-          [data]="networkService.data.value() ?? null"
-          [filters]="filters()"
-          (filtersChange)="filters.set($event)"
-        >
-        </app-network-filter>
-      </div>
-
       @if (selectedOrganisation()) {
-        <div class="absolute bottom-3 z-10 w-full">
+        <div class="absolute bottom-3 inset-x-0 z-10 px-3">
           <app-organisation-detail
             [organisation]="selectedOrganisation()!.organisation"
             [projectCount]="selectedOrganisation()!.projectCount"
@@ -51,7 +49,7 @@
       }
 
       @if (selectedProject()) {
-        <div class="absolute bottom-3 z-10 w-full">
+        <div class="absolute bottom-3 inset-x-0 z-10 px-3">
           <app-project-detail
             [selection]="selectedProject()!"
             (detailsRequested)="openProject($event)"

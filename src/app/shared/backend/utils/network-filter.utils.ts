@@ -2,6 +2,8 @@ import { NetworkFilters, Project } from '../models/network.model';
 
 export type Facet = 'programmes' | 'statuses' | 'dates';
 
+export const NO_VALUE = '__none__';
+
 export function toTime(value: any): number | null {
   if (value === null || value === undefined) return null;
 
@@ -26,15 +28,15 @@ export function toTime(value: any): number | null {
 }
 
 export function matchesFilters(p: Project, f: NetworkFilters, except?: Facet): boolean {
-  if (
-    except !== 'programmes' &&
-    f.programmes.length &&
-    !(p.programme && f.programmes.includes(p.programme._id))
-  )
-    return false;
+  if (except !== 'programmes' && f.programmes.length) {
+    const id = p.programme?._id ?? NO_VALUE;
+    if (!f.programmes.includes(id)) return false;
+  }
 
-  if (except !== 'statuses' && f.statuses.length && !(p.status && f.statuses.includes(p.status)))
-    return false;
+  if (except !== 'statuses' && f.statuses.length) {
+    const status = p.status || NO_VALUE;
+    if (!f.statuses.includes(status)) return false;
+  }
 
   if (except !== 'dates' && (f.dateFrom || f.dateTo)) {
     const start = toTime(p.start);

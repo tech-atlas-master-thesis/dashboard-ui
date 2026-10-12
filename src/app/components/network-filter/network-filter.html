@@ -1,104 +1,502 @@
-@if (!open()) {
-  <button
-    (click)="toggleOpen()"
-    class="flex items-center gap-2 bg-gray-500 backdrop-blur-sm rounded-xl shadow-md px-3 py-2 cursor-pointer hover:bg-gray-600 transition-colors"
-  >
-    <p class="text-xs text-white font-medium">Filter</p>
-    @if (activeCount()) {
-      <p class="text-[10px] font-medium bg-white text-gray-500 rounded-full px-1.5 py-0.5">
-        {{ activeCount() }}
-      </p>
-    }
-  </button>
-} @else {
-  <div
-    class="bg-white backdrop-blur-sm rounded-xl shadow-md p-3 flex flex-col gap-3 w-80 max-h-[75vh] overflow-y-auto no-scrollbar"
-  >
-    <div class="flex items-center justify-between gap-2 px-1">
-      <p class="text-xs text-gray-500 font-medium">Filtermöglichkeiten</p>
-      <div class="flex items-center gap-3 text-xs">
-        <button (click)="toggleOpen()" class="text-gray-500 hover:text-gray-600 cursor-pointer">
-          ✕
+<div class="relative">
+  @if (openFacet()) {
+    <button
+      type="button"
+      (click)="closeMenu()"
+      tabindex="-1"
+      class="fixed inset-0 z-0 cursor-default"
+    ></button>
+  }
+
+  <div class="relative flex flex-row z-10 items-center gap-2">
+    <div class="relative">
+      @if (isSet('date')) {
+        <div
+          class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
+        >
+          <button
+            type="button"
+            (click)="toggleFacet('date')"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <span class="text-gray-200">Zeitraum</span>
+            <span class="tabular-nums">{{ facetSummary('date') }}</span>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              class="text-gray-300"
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+          <span class="w-px h-4 bg-gray-400"></span>
+          <button
+            type="button"
+            (click)="clear('date')"
+            class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
+          >
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      } @else {
+        <button
+          type="button"
+          (click)="toggleFacet('date')"
+          class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+        >
+          Zeitraum
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            class="text-gray-400"
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
         </button>
-      </div>
-    </div>
+      }
 
-    <div class="flex flex-col gap-1.5 px-1">
-      <button
-        (click)="reset()"
-        class="rounded-xl bg-gray-500 p-2 text-xs font-medium text-white hover:bg-gray-600 cursor-pointer"
-      >
-        Filter zurücksetzen
-      </button>
-
-      <p class="text-xs text-gray-400 font-medium mt-2">Projektstart</p>
-      <div class="flex items-center gap-2">
-        <input
-          type="date"
-          [value]="current().dateFrom ?? ''"
-          (change)="setDateFrom($any($event.target).value)"
-          class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
-        />
-        <p class="text-xs text-gray-300">–</p>
-        <input
-          type="date"
-          [value]="current().dateTo ?? ''"
-          (change)="setDateTo($any($event.target).value)"
-          class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
-        />
-      </div>
-    </div>
-
-    @if (programmes().length) {
-      <div class="flex flex-col gap-1 px-1 border-t border-gray-100 pt-2">
-        <p class="text-xs text-gray-400 font-medium">Programmlinie</p>
-        @for (p of programmes(); track p.id) {
-          <label class="flex items-center gap-2 cursor-pointer">
+      @if (openFacet() === 'date') {
+        <div
+          class="absolute right-0 top-8 z-20 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-2"
+        >
+          <p class="text-xs text-gray-500">Projektstart</p>
+          <div class="flex items-center gap-2">
             <input
-              type="checkbox"
-              [checked]="isActive(current().programmes, p.id)"
-              (change)="toggleProgramme(p.id)"
-              class="rounded"
+              type="date"
+              [value]="current().dateFrom ?? ''"
+              (change)="setDateFrom($any($event.target).value)"
+              class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
             />
-            <p class="text-xs text-gray-600">{{ p.name }}</p>
-          </label>
-        }
-      </div>
-    }
+            <span class="text-xs text-gray-300">–</span>
+            <input
+              type="date"
+              [value]="current().dateTo ?? ''"
+              (change)="setDateTo($any($event.target).value)"
+              class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
+            />
+          </div>
+        </div>
+      }
+    </div>
 
     @if (statuses().length) {
-      <div class="flex flex-col gap-1 px-1 border-t border-gray-100 pt-2">
-        <p class="text-xs text-gray-400 font-medium">Status</p>
-        @for (status of statuses(); track status) {
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              [checked]="isActive(current().statuses, status.key)"
-              (change)="toggleStatus(status.key)"
-              class="rounded"
-            />
-            <p class="text-xs text-gray-600">{{ status.label }}</p>
-          </label>
+      <div class="relative">
+        @if (isSet('statuses')) {
+          <div
+            class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
+          >
+            <button
+              type="button"
+              (click)="toggleFacet('statuses')"
+              class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0"
+            >
+              <span class="text-gray-200 shrink-0">Status</span>
+              <span class="truncate">{{ facetSummary('statuses') }}</span>
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                class="text-gray-300 shrink-0"
+              >
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </button>
+            <span class="w-px h-4 bg-gray-400"></span>
+            <button
+              type="button"
+              (click)="clear('statuses')"
+              class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <button
+            type="button"
+            (click)="toggleFacet('statuses')"
+            class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+          >
+            Status
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              class="text-gray-400"
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+        }
+
+        @if (openFacet() === 'statuses') {
+          <div
+            class="absolute right-0 top-8 z-20 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-1"
+          >
+            <div class="flex items-baseline justify-between pb-1">
+              <p class="text-xs text-gray-500">Status</p>
+              <button
+                type="button"
+                (click)="clearFacet('statuses')"
+                class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
+              >
+                alle
+              </button>
+            </div>
+
+            @for (s of statuses(); track s.key) {
+              <div class="flex items-center gap-2 h-7">
+                <input
+                  type="checkbox"
+                  [id]="'status-' + s.key"
+                  [checked]="isActive(current().statuses, s.key)"
+                  (change)="toggleStatus(s.key)"
+                  class="rounded cursor-pointer"
+                />
+                <label [for]="'status-' + s.key" class="flex-1 text-xs cursor-pointer truncate">{{
+                  s.label
+                }}</label>
+                <button
+                  type="button"
+                  (click)="only('statuses', s.key)"
+                  class="text-[10px] text-gray-400 hover:text-gray-900 underline cursor-pointer"
+                >
+                  nur
+                </button>
+                <span class="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                  <span
+                    class="block h-1.5 rounded-full bg-gray-400"
+                    [style.width]="statusWidth(s.count)"
+                  ></span>
+                </span>
+                <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
+                  int(s.count)
+                }}</span>
+              </div>
+            }
+          </div>
         }
       </div>
     }
 
     @if (organisationTypes().length) {
-      <div class="flex flex-col gap-1 px-1 border-t border-gray-100 pt-2">
-        <p class="text-xs text-gray-400 font-medium">Organisationstyp</p>
-        @for (type of organisationTypes(); track type.key) {
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              [checked]="isActive(current().organisationTypes, type.key)"
-              (change)="toggleType(type.key)"
-              class="rounded"
-            />
-            <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="type.color"></span>
-            <p class="text-xs text-gray-600">{{ type.label }}</p>
-          </label>
+      <div class="relative">
+        @if (isSet('organisationTypes')) {
+          <div
+            class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
+          >
+            <button
+              type="button"
+              (click)="toggleFacet('organisationTypes')"
+              class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0"
+            >
+              <span class="text-gray-200 shrink-0">Typ</span>
+              <span class="flex items-center shrink-0">
+                @for (color of chosenTypeColors(); track $index) {
+                  <span
+                    class="w-2.5 h-2.5 rounded-full ring-2 ring-gray-500 -ml-1 first:ml-0"
+                    [style.background]="color"
+                  ></span>
+                }
+              </span>
+              <span class="truncate">{{ facetSummary('organisationTypes') }}</span>
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                class="text-gray-300 shrink-0"
+              >
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </button>
+            <span class="w-px h-4 bg-gray-400"></span>
+            <button
+              type="button"
+              (click)="clear('organisationTypes')"
+              class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <button
+            type="button"
+            (click)="toggleFacet('organisationTypes')"
+            class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+          >
+            Organisationstyp
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              class="text-gray-400"
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+        }
+
+        @if (openFacet() === 'organisationTypes') {
+          <div
+            class="absolute right-0 top-8 z-20 w-80 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-1"
+          >
+            <div class="flex items-baseline justify-between pb-1">
+              <p class="text-xs text-gray-500">Organisationstyp</p>
+              <button
+                type="button"
+                (click)="clearFacet('organisationTypes')"
+                class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
+              >
+                alle
+              </button>
+            </div>
+
+            @for (t of organisationTypes(); track t.key) {
+              <div class="flex items-center gap-2 h-7">
+                <input
+                  type="checkbox"
+                  [id]="'type-' + t.key"
+                  [checked]="isActive(current().organisationTypes, t.key)"
+                  (change)="toggleType(t.key)"
+                  class="rounded cursor-pointer"
+                />
+                <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="t.color"></span>
+                <label
+                  [for]="'type-' + t.key"
+                  class="flex-1 min-w-0 text-xs cursor-pointer truncate"
+                  >{{ t.label }}</label
+                >
+                <button
+                  type="button"
+                  (click)="only('organisationTypes', t.key)"
+                  class="text-[10px] text-gray-400 hover:text-gray-900 underline cursor-pointer"
+                >
+                  nur
+                </button>
+                <span class="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                  <span
+                    class="block h-1.5 rounded-full"
+                    [style.width]="typeWidth(t.count)"
+                    [style.background]="t.color"
+                  ></span>
+                </span>
+                <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
+                  int(t.count)
+                }}</span>
+              </div>
+            }
+          </div>
         }
       </div>
     }
+
+    @if (programmes().length) {
+      <div class="relative">
+        @if (isSet('programmes')) {
+          <div
+            class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
+          >
+            <button
+              type="button"
+              (click)="toggleFacet('programmes')"
+              class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0"
+            >
+              <span class="text-gray-200 shrink-0">Linie</span>
+              <span class="truncate">{{ facetSummary('programmes') }}</span>
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                class="text-gray-300 shrink-0"
+              >
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </button>
+            <span class="w-px h-4 bg-gray-400"></span>
+            <button
+              type="button"
+              (click)="clear('programmes')"
+              class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <button
+            type="button"
+            (click)="toggleFacet('programmes')"
+            class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+          >
+            Programmlinie
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              class="text-gray-400"
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+        }
+
+        @if (openFacet() === 'programmes') {
+          <div
+            class="absolute right-0 top-8 z-20 w-96 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-1 max-h-96 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div class="flex items-baseline justify-between pb-1">
+              <p class="text-xs text-gray-500">Programmlinie</p>
+              <button
+                type="button"
+                (click)="clearFacet('programmes')"
+                class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
+              >
+                alle
+              </button>
+            </div>
+
+            @for (p of programmes(); track p.id) {
+              <div class="flex items-center gap-2 h-7">
+                <input
+                  type="checkbox"
+                  [id]="'programme-' + p.id"
+                  [checked]="isActive(current().programmes, p.id)"
+                  (change)="toggleProgramme(p.id)"
+                  class="rounded cursor-pointer"
+                />
+                <label
+                  [for]="'programme-' + p.id"
+                  class="flex-1 min-w-0 text-xs cursor-pointer truncate"
+                  [title]="p.name"
+                  >{{ p.name }}</label
+                >
+                <button
+                  type="button"
+                  (click)="only('programmes', p.id)"
+                  class="text-[10px] text-gray-400 hover:text-gray-900 underline cursor-pointer"
+                >
+                  nur
+                </button>
+                <span class="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                  <span
+                    class="block h-1.5 rounded-full bg-gray-400"
+                    [style.width]="programmeWidth(p.count)"
+                  ></span>
+                </span>
+                <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
+                  int(p.count)
+                }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <span class="w-px h-4 bg-gray-200 mx-0.5"></span>
+
+    <p class="text-xs text-gray-500 tabular-nums whitespace-nowrap pl-0.5">
+      <span class="text-gray-900 font-medium">{{ int(matchedProjects()) }}</span>
+      von {{ int(totalProjects()) }} Projekten
+    </p>
+
+    <button
+      type="button"
+      (click)="reset()"
+      [disabled]="!filtered()"
+      [class.opacity-0]="!filtered()"
+      [class.pointer-events-none]="!filtered()"
+      title="Alle Filter zurücksetzen"
+      class="w-6 h-6 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
+    >
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M20 11a8 8 0 1 0-2.3 6"></path>
+        <polyline points="20,4 20,11 13,11"></polyline>
+      </svg>
+    </button>
   </div>
-}
+</div>
