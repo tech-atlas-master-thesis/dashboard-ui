@@ -22,7 +22,7 @@ export interface Project {
   status: string;
   keywords: string[];
   organisations: string[];
-  projectLeader: string;
+  projectLeader: string[];
   grant: Grant;
   programme: Programme;
 }
@@ -54,7 +54,7 @@ export interface Programme {
   name: string;
 }
 
-export type NetworkNodeType = 'org' | 'project';
+export type NetworkNodeType = 'org' | 'project' | 'bundle';
 
 export const ORGANISATION_TYPE_COLORS: Record<string, string> = {
   'Außeruniversitäre Forschungseinrichtung': '#159d18',
@@ -110,17 +110,24 @@ export interface NetworkNode {
   type?: string;
   organisation?: Organisation;
   project?: Project;
+  bundleOf?: 'org' | 'project';
+  members?: Organisation[];
+  bundledProjects?: Project[];
+  leadIds?: string[];
   count: number;
   r: number;
   x: number;
   y: number;
   fanned?: boolean;
   ringRadius?: number;
+  fringe?: boolean;
+  hidden?: boolean;
 }
 
 export interface NetworkLink {
   source: NetworkNode;
   target: NetworkNode;
+  lead?: boolean;
 }
 
 export interface NetworkFilters {
@@ -129,7 +136,11 @@ export interface NetworkFilters {
   organisationTypes: string[];
   dateFrom: string | null;
   dateTo: string | null;
+  bundling?: boolean;
+  bundleFrom?: number;
 }
+
+export const DEFAULT_BUNDLE_FROM = 4;
 
 export const emptyFilters = (): NetworkFilters => ({
   programmes: [],
@@ -137,4 +148,6 @@ export const emptyFilters = (): NetworkFilters => ({
   organisationTypes: [],
   dateFrom: null,
   dateTo: null,
+  bundling: false,
+  bundleFrom: DEFAULT_BUNDLE_FROM,
 });

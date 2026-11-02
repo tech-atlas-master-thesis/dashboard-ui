@@ -32,6 +32,7 @@ export class KeyTechnologyDetail {
   filters = signal<NetworkFilters>(emptyFilters());
   selectedOrganisation = signal<OrganisationSelection | null>(null);
   selectedProject = signal<ProjectSelection | null>(null);
+  selectRequest = signal<{ id: string } | null>(null);
 
   private readonly origin = signal<{ url: string | null; label: string | null }>({
     url: null,

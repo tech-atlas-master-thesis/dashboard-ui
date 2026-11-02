@@ -2,13 +2,36 @@
   @if (openFacet()) {
     <button
       type="button"
-      (click)="closeMenu()"
+      (click)="closeAll()"
       tabindex="-1"
       class="fixed inset-0 z-0 cursor-default"
     ></button>
   }
 
   <div class="relative flex flex-row z-10 items-center gap-2">
+    <button
+      type="button"
+      (click)="openSearch()"
+      title="Suchen (⌘K)"
+      aria-label="Organisation oder Projekt suchen"
+      class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+    >
+      Suchen
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        class="text-gray-400"
+      >
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+      </svg>
+    </button>
+
     <div class="relative">
       @if (isSet('date')) {
         <div
@@ -109,7 +132,7 @@
             <button
               type="button"
               (click)="toggleFacet('statuses')"
-              class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0"
+              class="flex items-center gap-2 cursor-pointer"
             >
               <span class="text-gray-200 shrink-0">Status</span>
               <span class="truncate">{{ facetSummary('statuses') }}</span>
@@ -469,11 +492,133 @@
       </div>
     }
 
+    <div class="relative">
+      @if (isSet('bundling')) {
+        <div
+          class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
+        >
+          <button
+            type="button"
+            (click)="toggleFacet('bundling')"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <span class="text-gray-200">Bündelung</span>
+            <span class="tabular-nums">{{ facetSummary('bundling') }}</span>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              class="text-gray-300"
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+          <span class="w-px h-4 bg-gray-400"></span>
+          <button
+            type="button"
+            (click)="clear('bundling')"
+            class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
+          >
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      } @else {
+        <button
+          type="button"
+          (click)="toggleFacet('bundling')"
+          class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+        >
+          Bündelung
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            class="text-gray-400"
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </button>
+      }
+
+      @if (openFacet() === 'bundling') {
+        <div
+          class="absolute right-0 top-8 z-20 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-2"
+        >
+          <div class="flex items-baseline justify-between">
+            <p class="text-xs text-gray-500">Bündelung</p>
+            <button
+              type="button"
+              (click)="resetBundling()"
+              class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
+            >
+              Standard
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 h-7">
+            <input
+              type="checkbox"
+              id="bundling-on"
+              [checked]="bundling()"
+              (change)="toggleBundling()"
+              class="rounded cursor-pointer"
+            />
+            <label for="bundling-on" class="flex-1 text-xs cursor-pointer"
+              >Einzelbeteiligte zusammenfassen</label
+            >
+          </div>
+
+          <div class="flex items-center gap-2 h-7" [class.opacity-40]="!bundling()">
+            <label for="bundling-from" class="flex-1 text-xs">ab</label>
+            <input
+              type="range"
+              id="bundling-from"
+              min="2"
+              max="12"
+              step="1"
+              [value]="bundleFrom()"
+              [disabled]="!bundling()"
+              (input)="setBundleFrom($any($event.target).value)"
+              class="w-36 accent-gray-500 cursor-pointer"
+            />
+            <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
+              int(bundleFrom())
+            }}</span>
+          </div>
+
+          <p class="text-[11px] text-gray-400 leading-snug">
+            Organisationen, die nur an einem Projekt hängen, und Projekte, die nur an einer
+            Organisation hängen, werden ab dieser Anzahl zu einem Knoten zusammengefasst. Vorgabe
+            {{ int(defaultBundleFrom) }}.
+          </p>
+        </div>
+      }
+    </div>
+
     <span class="w-px h-4 bg-gray-200 mx-0.5"></span>
 
     <p class="text-xs text-gray-500 tabular-nums whitespace-nowrap pl-0.5">
       <span class="text-gray-900 font-medium">{{ int(matchedProjects()) }}</span>
-      von {{ int(totalProjects()) }} Projekten
+      / {{ int(totalProjects()) }} Projekten
     </p>
 
     <button
@@ -499,4 +644,145 @@
       </svg>
     </button>
   </div>
+
+  @if (searchOpen()) {
+    <div class="fixed inset-0 z-40">
+      <button
+        type="button"
+        (click)="closeSearch()"
+        tabindex="-1"
+        aria-label="Suche schließen"
+        class="absolute inset-0 bg-gray-900/20 backdrop-blur-[2px] cursor-default"
+      ></button>
+
+      <div
+        class="absolute left-1/2 top-[16%] -translate-x-1/2 w-xl max-w-[92vw] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div class="flex items-center gap-3 h-12 px-4">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            class="text-gray-400 shrink-0"
+          >
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+          </svg>
+          <input
+            id="network-search"
+            type="text"
+            [value]="search()"
+            (input)="setSearch($any($event.target).value)"
+            (keydown)="onSearchKey($event)"
+            placeholder="Organisation oder Projekt suchen"
+            aria-label="Organisation oder Projekt suchen"
+            class="flex-1 min-w-0 text-sm text-gray-900 placeholder:text-gray-400 bg-transparent outline-none"
+          />
+          <button
+            type="button"
+            (click)="search() ? clearSearch() : closeSearch()"
+            [title]="search() ? 'Suche leeren' : 'Schließen'"
+            class="w-6 h-6 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        @if (!searching()) {
+          <p class="border-t border-gray-100 px-4 py-3 text-xs text-gray-400">
+            Sucht über die Organisationen und Projekte, die gerade im Netz stehen. Ein Treffer wird
+            ausgewählt, als hätte man den Knoten angeklickt.
+          </p>
+        } @else {
+          <div
+            class="border-t border-gray-100 p-2 pr-1 flex flex-col gap-0.5 max-h-88 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#d1d5db_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
+          >
+            @if (!searchResults().total) {
+              <p class="px-2 py-2 text-xs text-gray-400">Nichts gefunden.</p>
+            }
+
+            @if (searchResults().organisations.length) {
+              <p class="px-2 pt-1 pb-1 text-[11px] text-gray-400">
+                Organisationen
+                <span class="tabular-nums">{{ int(searchResults().organisations.length) }}</span>
+              </p>
+              @for (o of searchResults().organisations; track o.id) {
+                <button
+                  type="button"
+                  [id]="'result-' + o.id"
+                  (click)="pick(o.id)"
+                  [class.bg-gray-100]="activeId() === o.id"
+                  class="flex items-center gap-2.5 h-9 px-2 text-left cursor-pointer rounded-xl hover:bg-gray-50"
+                >
+                  <span
+                    class="w-2.5 h-2.5 rounded-full shrink-0"
+                    [style.background]="o.color"
+                  ></span>
+                  <span class="flex-1 min-w-0 text-xs truncate text-gray-600" [title]="o.label">
+                    @for (part of o.parts; track $index) {
+                      <span [class]="part.hit ? 'font-semibold text-gray-900' : ''">{{
+                        part.text
+                      }}</span>
+                    }
+                  </span>
+                  <span class="text-[10px] text-gray-400 shrink-0">{{ o.hint }}</span>
+                </button>
+              }
+            }
+
+            @if (searchResults().projects.length) {
+              <p class="px-2 pt-2 pb-1 text-[11px] text-gray-400">
+                Projekte
+                <span class="tabular-nums">{{ int(searchResults().projects.length) }}</span>
+              </p>
+              @for (p of searchResults().projects; track p.id) {
+                <button
+                  type="button"
+                  [id]="'result-' + p.id"
+                  (click)="pick(p.id)"
+                  [class.bg-gray-100]="activeId() === p.id"
+                  class="flex items-center gap-2.5 h-9 px-2 text-left cursor-pointer rounded-xl hover:bg-gray-50"
+                >
+                  <span class="w-2.5 h-2.5 rounded-xs shrink-0 bg-slate-600"></span>
+                  <span class="flex-1 min-w-0 text-xs truncate text-gray-600" [title]="p.label">
+                    @for (part of p.parts; track $index) {
+                      <span [class]="part.hit ? 'font-semibold text-gray-900' : ''">{{
+                        part.text
+                      }}</span>
+                    }
+                  </span>
+                  <span class="text-[10px] text-gray-400 shrink-0 max-w-44 truncate">{{
+                    p.hint
+                  }}</span>
+                </button>
+              }
+            }
+          </div>
+        }
+
+        <div
+          class="border-t border-gray-100 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-400"
+        >
+          <span><span class="text-gray-500">↑↓</span> wählen</span>
+          <span><span class="text-gray-500">↵</span> öffnen</span>
+          <span><span class="text-gray-500">esc</span> schließen</span>
+        </div>
+      </div>
+    </div>
+  }
 </div>

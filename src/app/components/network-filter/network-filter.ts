@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  HostListener,
   Input,
   Output,
   computed,
   signal,
 } from '@angular/core';
 import {
+  DEFAULT_BUNDLE_FROM,
   NetworkData,
   NetworkFilters,
   emptyFilters,
@@ -16,8 +18,9 @@ import {
   organisationTypeName,
 } from '@shared/backend/models/network.model';
 import { NO_VALUE, matchesFilters } from '@shared/backend/utils/network-filter.utils';
+import { SearchHit, createMatcher, toHits } from '@shared/backend/utils/search.utils';
 
-export type Facet = 'date' | 'statuses' | 'organisationTypes' | 'programmes';
+export type Facet = 'date' | 'statuses' | 'organisationTypes' | 'programmes' | 'bundling';
 
 type ListFacet = 'statuses' | 'organisationTypes' | 'programmes';
 
@@ -47,6 +50,7 @@ export class NetworkFilter {
     this._filters.set(f);
   }
   @Output() filtersChange = new EventEmitter<NetworkFilters>();
+  @Output() selectRequested = new EventEmitter<{ id: string }>();
 
   private _data = signal<NetworkData | null>(null);
   private _filters = signal<NetworkFilters>(emptyFilters());
@@ -80,6 +84,127 @@ export class NetworkFilter {
 
   readonly openFacet = signal<Facet | null>(null);
 
+  readonly search = signal('');
+  readonly searchOpen = signal(false);
+  private readonly activeIndex = signal(0);
+
+  readonly activeId = computed(() => this.flatResults()[this.activeIndex()] ?? null);
+
+  private readonly flatResults = computed(() => {
+    const results = this.searchResults();
+    return [...results.organisations, ...results.projects].map((entry: SearchHit) => entry.id);
+  });
+
+  openSearch(): void {
+    this.closeMenu();
+    this.searchOpen.set(true);
+    setTimeout(() => document.getElementById('network-search')?.focus());
+  }
+
+  closeSearch(): void {
+    this.searchOpen.set(false);
+    this.search.set('');
+    this.activeIndex.set(0);
+  }
+
+  setSearch(value: string): void {
+    this.search.set(value);
+    this.activeIndex.set(0);
+  }
+
+  onSearchKey(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.closeSearch();
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const id = this.activeId();
+      if (id) this.pick(id);
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+
+    event.preventDefault();
+    const total = this.flatResults().length;
+    if (!total) return;
+
+    const next = (this.activeIndex() + (event.key === 'ArrowDown' ? 1 : -1) + total) % total;
+    this.activeIndex.set(next);
+    setTimeout(() =>
+      document.getElementById(`result-${this.flatResults()[next]}`)?.scrollIntoView({
+        block: 'nearest',
+      }),
+    );
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onShortcut(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (this.searchOpen()) {
+        this.closeSearch();
+      } else {
+        this.openSearch();
+      }
+    }
+  }
+
+  readonly searching = computed(() => createMatcher(this.search()).active);
+
+  readonly searchResults = computed(() => {
+    const matcher = createMatcher(this.search());
+    if (!matcher.active) return { organisations: [], projects: [], total: 0 };
+
+    const surviving = this.survivingProjects();
+    const allowed = this.allowedOrgIds();
+
+    const projects = toHits(surviving, matcher, (p) => {
+      const label = p.short || p.title || p.externalId || '—';
+      if (![p.short, p.title, p.externalId].some((v) => matcher.matches(v))) return null;
+      return {
+        id: `p:${p._id}`,
+        label,
+        hint: p.short && p.title && p.short !== p.title ? p.title : '',
+      };
+    });
+
+    const active = new Set<string>();
+    for (const project of surviving) {
+      for (const id of project.organisations) {
+        if (!allowed || allowed.has(id)) active.add(id);
+      }
+    }
+
+    const organisations = toHits(this._data()?.nodes ?? [], matcher, (n) => {
+      if (!active.has(n._id.$oid) || !matcher.matches(n.name)) return null;
+      return {
+        id: n._id.$oid,
+        label: n.name,
+        hint: organisationTypeName(n.type),
+        color: organisationColor(n.type),
+      };
+    });
+
+    return { organisations, projects, total: organisations.length + projects.length };
+  });
+
+  pick(id: string): void {
+    this.closeMenu();
+    this.closeSearch();
+    this.selectRequested.emit({ id });
+  }
+
+  clearSearch(): void {
+    this.setSearch('');
+    document.getElementById('network-search')?.focus();
+  }
+
+  closeAll(): void {
+    this.closeMenu();
+    this.closeSearch();
+  }
+
   toggleFacet(facet: Facet): void {
     this.openFacet.update((open) => (open === facet ? null : facet));
   }
@@ -94,9 +219,33 @@ export class NetworkFilter {
       (f.programmes.length ? 1 : 0) +
       (f.statuses.length ? 1 : 0) +
       (f.organisationTypes.length ? 1 : 0) +
-      (f.dateFrom || f.dateTo ? 1 : 0)
+      (f.dateFrom || f.dateTo ? 1 : 0) +
+      (this.bundling() ? 1 : 0)
     );
   });
+
+  readonly bundling = computed(() => this._filters().bundling === true);
+
+  readonly bundleFrom = computed(() => this._filters().bundleFrom ?? DEFAULT_BUNDLE_FROM);
+
+  readonly defaultBundleFrom = DEFAULT_BUNDLE_FROM;
+
+  toggleBundling(): void {
+    this.filtersChange.emit({ ...this._filters(), bundling: !this.bundling() });
+  }
+
+  setBundleFrom(value: string | number): void {
+    const next = Math.min(12, Math.max(2, Math.round(Number(value) || DEFAULT_BUNDLE_FROM)));
+    this.filtersChange.emit({ ...this._filters(), bundleFrom: next });
+  }
+
+  resetBundling(): void {
+    this.filtersChange.emit({
+      ...this._filters(),
+      bundling: false,
+      bundleFrom: DEFAULT_BUNDLE_FROM,
+    });
+  }
 
   readonly filtered = computed(() => this.activeCount() > 0);
 
@@ -201,6 +350,7 @@ export class NetworkFilter {
     const f = this._filters();
 
     if (facet === 'date') return this.dateLabel();
+    if (facet === 'bundling') return `ab ${this.bundleFrom()}`;
 
     const chosen = f[facet];
     if (!chosen.length) return '';
@@ -232,6 +382,7 @@ export class NetworkFilter {
   isSet(facet: Facet): boolean {
     const f = this._filters();
     if (facet === 'date') return !!(f.dateFrom || f.dateTo);
+    if (facet === 'bundling') return this.bundling();
     return f[facet].length > 0;
   }
 
@@ -248,6 +399,10 @@ export class NetworkFilter {
   clear(facet: Facet): void {
     if (facet === 'date') {
       this.clearDates();
+      return;
+    }
+    if (facet === 'bundling') {
+      this.resetBundling();
       return;
     }
     this.clearFacet(facet);

@@ -27,14 +27,15 @@ import { NetworkFilter } from '../../components/network-filter/network-filter';
 import { OrganisationDetail } from '../../components/organisation-detail/organisation-detail';
 import { ProjectDetail } from '../../components/project-detail/project-detail';
 import { Metrics } from '../../components/metrics/metrics';
+import { Search } from '../../components/search/search';
 
 type D3Node = d3.HierarchyRectangularNode<TechnologyViewModel>;
 type Mode = 'technologies' | 'network';
-type FieldMode = 'tiles' | 'metrics';
+type FieldMode = 'tiles' | 'metrics' | 'search';
 
 @Component({
   selector: 'app-key-technologies',
-  imports: [Network, NetworkFilter, OrganisationDetail, ProjectDetail, Metrics],
+  imports: [Network, NetworkFilter, OrganisationDetail, ProjectDetail, Metrics, Search],
   templateUrl: './key-technologies.html',
   styleUrls: ['./key-technologies.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,10 +46,12 @@ export class KeyTechnologies implements OnDestroy {
   showNetwork = computed(() => this.mode() === 'network' && !!this.selectedField());
   fieldMode = signal<FieldMode>('tiles');
   showMetrics = computed(() => this.fieldMode() === 'metrics' && !this.selectedField());
+  showSearch = computed(() => this.fieldMode() === 'search' && !this.selectedField());
 
   filters = signal<NetworkFilters>(emptyFilters());
   selectedOrganisation = signal<OrganisationSelection | null>(null);
   selectedProject = signal<ProjectSelection | null>(null);
+  selectRequest = signal<{ id: string } | null>(null);
 
   private width = 0;
   private height = 0;
@@ -74,7 +77,8 @@ export class KeyTechnologies implements OnDestroy {
         const fieldID = params.get('field');
         const field = fieldID ? (fields.find((f) => f._id.$oid === fieldID) ?? null) : null;
 
-        this.fieldMode.set(params.get('view') === 'metrics' ? 'metrics' : 'tiles');
+        const view = params.get('view');
+        this.fieldMode.set(view === 'metrics' || view === 'search' ? view : 'tiles');
 
         if (field) {
           this.mode.set(params.get('mode') === 'network' ? 'network' : 'technologies');
@@ -84,7 +88,7 @@ export class KeyTechnologies implements OnDestroy {
         } else {
           this.mode.set('technologies');
           this.selectedField.set(null);
-          if (this.fieldMode() === 'metrics') return;
+          if (this.fieldMode() !== 'tiles') return;
           this.withChart(() => this.renderFields(fields));
         }
       });
@@ -99,7 +103,7 @@ export class KeyTechnologies implements OnDestroy {
     this.mode.set('technologies');
     this.closePanels();
 
-    if (this.fieldMode() === 'metrics') {
+    if (this.fieldMode() !== 'tiles') {
       this.selectedField.set(null);
       this.syncQueryParams();
     } else {
@@ -130,7 +134,7 @@ export class KeyTechnologies implements OnDestroy {
     this.fieldMode.set(next);
     this.syncQueryParams();
 
-    if (next === 'metrics') {
+    if (next !== 'tiles') {
       this.resizeObserver?.disconnect();
     } else {
       this.withChart(() => this.renderFields(this.allFields));
@@ -155,7 +159,7 @@ export class KeyTechnologies implements OnDestroy {
       queryParams: {
         field: field?._id.$oid ?? null,
         mode: field && this.mode() === 'network' ? 'network' : null,
-        view: this.fieldMode() === 'metrics' ? 'metrics' : null,
+        view: this.fieldMode() === 'tiles' ? null : this.fieldMode(),
       },
       replaceUrl: true,
     });
@@ -213,7 +217,7 @@ export class KeyTechnologies implements OnDestroy {
     if (!el) return;
 
     this.resizeObserver = new ResizeObserver(() => {
-      if (this.showNetwork() || this.showMetrics()) return;
+      if (this.showNetwork() || this.showMetrics() || this.showSearch()) return;
       this.width = el.clientWidth;
       this.height = el.clientHeight;
       this.svg.attr('width', this.width).attr('height', this.height);
@@ -412,7 +416,7 @@ export class KeyTechnologies implements OnDestroy {
     this.renderSquares(root.leaves() as D3Node[], (d) => {
       if (d.data.techID) {
         this.router.navigate(['/key-technologies', d.data.techID], {
-          queryParams: { view: this.fieldMode() === 'metrics' ? 'metrics' : null },
+          queryParams: { view: this.fieldMode() === 'tiles' ? null : this.fieldMode() },
         });
       }
     });

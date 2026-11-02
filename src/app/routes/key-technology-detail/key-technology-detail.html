@@ -23,6 +23,7 @@
         [data]="networkService.data.value() ?? null"
         [filters]="filters()"
         (filtersChange)="filters.set($event)"
+        (selectRequested)="selectRequest.set($event)"
       ></app-network-filter>
     </div>
 
@@ -32,6 +33,7 @@
         [filters]="filters()"
         (nodeSelected)="onNodeSelected($event)"
         (projectSelected)="onProjectSelected($event)"
+        [selectNode]="selectRequest()"
       >
       </app-network>
 
