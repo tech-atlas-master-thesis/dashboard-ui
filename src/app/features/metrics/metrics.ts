@@ -7,8 +7,8 @@ import {
   Output,
   signal,
 } from '@angular/core';
-import { AnalysisService } from '@shared/backend/services/analysis-service';
-import { FieldMetricsRow } from '@shared/backend/models/analysis.model';
+import { AnalysisService } from '@shared/services/analysis-service';
+import { FieldMetricsRow } from '@shared/models/analysis.model';
 
 type SortKey =
   | 'label'

@@ -1,19 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProjectService } from '@shared/backend/services/project-service';
+import { ProjectService } from '@shared/services/project-service';
 import {
   ParticipantRow,
   RecurringProjectRow,
   TechnologyField,
   TechnologyRef,
-} from '@shared/backend/models/project.model';
+} from '@shared/models/project.model';
 import {
   organisationColor,
   organisationTypeName,
   PROJECT_COLOR,
   projectStatusName,
-} from '@shared/backend/models/network.model';
+} from '@shared/models/network.model';
 import {
   cityOnly,
   cleanKeywords,
@@ -21,7 +21,7 @@ import {
   oid,
   toDate,
   toParagraphs,
-} from '@shared/backend/utils/details.utils';
+} from '@shared/utils/details.utils';
 
 @Component({
   selector: 'app-project',

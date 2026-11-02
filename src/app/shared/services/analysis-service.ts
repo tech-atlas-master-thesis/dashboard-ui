@@ -2,8 +2,8 @@ import { inject, Injectable, resource } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, of } from 'rxjs';
 import { FieldAnalysis, emptyAnalysis } from '../models/analysis.model';
-import environment from '../../../environment/environment';
-import { DatasetsState } from '../../../state/datasets/datasets.state';
+import environment from '../../environments/environment';
+import { DatasetsState } from '../../state/datasets/datasets.state';
 
 @Injectable({ providedIn: 'root' })
 export class AnalysisService {

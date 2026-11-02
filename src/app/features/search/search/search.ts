@@ -1,17 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatasetsState } from '../../state/datasets/datasets.state';
-import { SearchResponse, SearchService } from '@shared/backend/services/search-service';
-import {
-  MIN_SEARCH_LENGTH,
-  SearchHit,
-  createMatcher,
-  toHits,
-} from '@shared/backend/utils/search.utils';
-import { organisationColor, organisationTypeName } from '@shared/backend/models/network.model';
+import { DatasetsState } from '../../../state/datasets/datasets.state';
+import { SearchResponse, SearchService } from '@shared/services/search-service';
+import { MIN_SEARCH_LENGTH, SearchHit, createMatcher, toHits } from '@shared/utils/search.utils';
+import { organisationColor, organisationTypeName } from '@shared/models/network.model';
 
-interface Target { kind: 'organisation' | 'project'; id: string }
+interface Target {
+  kind: 'organisation' | 'project';
+  id: string;
+}
 
 @Component({
   selector: 'app-search',

@@ -1,11 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { toTime } from '@shared/backend/utils/network-filter.utils';
-import {
-  PROJECT_COLOR,
-  ProjectSelection,
-  projectStatusName,
-} from '@shared/backend/models/network.model';
+import { toTime } from '@shared/utils/network-filter.utils';
+import { PROJECT_COLOR, ProjectSelection, projectStatusName } from '@shared/models/network.model';
 
 @Component({
   selector: 'app-project-detail',

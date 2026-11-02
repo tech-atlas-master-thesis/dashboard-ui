@@ -3,7 +3,7 @@ import {
   Organisation,
   organisationColor,
   organisationTypeName,
-} from '@shared/backend/models/network.model';
+} from '@shared/models/network.model';
 
 @Component({
   selector: 'app-organisation-detail',

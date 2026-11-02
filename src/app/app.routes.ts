@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { Home } from './routes/home/home';
 import { KeyTechnologies } from './routes/key-technologies/key-technologies';
 import { KeyTechnologyDetail } from './routes/key-technology-detail/key-technology-detail';
 import { Organisation } from './routes/organisation/organisation';

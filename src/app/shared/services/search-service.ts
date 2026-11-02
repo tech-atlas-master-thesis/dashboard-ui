@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import environment from '../../../environment/environment';
+import environment from '../../environments/environment';
 
 export interface SearchOrganisation {
   _id: string;

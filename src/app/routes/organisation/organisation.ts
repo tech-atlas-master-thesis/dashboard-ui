@@ -1,16 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { OrganisationService } from '@shared/backend/services/organisation-service';
-import { FieldProfileRow, OrganisationProjectRow } from '@shared/backend/models/organisation.model';
-import { organisationColor, organisationTypeName } from '@shared/backend/models/network.model';
-import {
-  cityOnly,
-  countRunning,
-  oid,
-  titleCase,
-  toDate,
-} from '@shared/backend/utils/details.utils';
+import { OrganisationService } from '@shared/services/organisation-service';
+import { FieldProfileRow, OrganisationProjectRow } from '@shared/models/organisation.model';
+import { organisationColor, organisationTypeName } from '@shared/models/network.model';
+import { cityOnly, countRunning, oid, titleCase, toDate } from '@shared/utils/details.utils';
 
 @Component({
   selector: 'app-organisation',

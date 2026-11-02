@@ -1,4 +1,4 @@
-import { Style } from './key-technologies.model';
+import { Style } from '../models/key-technologies.model';
 
 export interface StructuralMetrics {
   projects: number;

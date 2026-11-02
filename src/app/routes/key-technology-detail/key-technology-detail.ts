@@ -1,18 +1,18 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { KeyTechnologyService } from '@shared/backend/services/key-technologies-service';
-import { NetworkService } from '@shared/backend/services/network-service';
-import { KeyTechnology, TechnologyField } from '@shared/backend/models/key-technologies.model';
+import { KeyTechnologyService } from '@shared/services/key-technologies-service';
+import { NetworkService } from '@shared/services/network-service';
+import { KeyTechnology, TechnologyField } from '@shared/models/key-technologies.model';
 import {
   NetworkFilters,
   OrganisationSelection,
   ProjectSelection,
   emptyFilters,
-} from '@shared/backend/models/network.model';
-import { Network } from '../../components/network/network';
-import { NetworkFilter } from '../../components/network-filter/network-filter';
-import { OrganisationDetail } from '../../components/organisation-detail/organisation-detail';
-import { ProjectDetail } from '../../components/project-detail/project-detail';
+} from '@shared/models/network.model';
+import { Network } from '../../features/network/network/network';
+import { NetworkFilter } from '../../features/network/network-filter/network-filter';
+import { OrganisationDetail } from '../../features/details/organisation-detail/organisation-detail';
+import { ProjectDetail } from '../../features/details/project-detail/project-detail';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({

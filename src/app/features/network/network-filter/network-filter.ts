@@ -16,9 +16,9 @@ import {
   organisationColor,
   projectStatusName,
   organisationTypeName,
-} from '@shared/backend/models/network.model';
-import { NO_VALUE, matchesFilters } from '@shared/backend/utils/network-filter.utils';
-import { SearchHit, createMatcher, toHits } from '@shared/backend/utils/search.utils';
+} from '@shared/models/network.model';
+import { NO_VALUE, matchesFilters } from '@shared/utils/network-filter.utils';
+import { SearchHit, createMatcher, toHits } from '@shared/utils/search.utils';
 
 export type Facet = 'date' | 'statuses' | 'organisationTypes' | 'programmes' | 'bundling';
 

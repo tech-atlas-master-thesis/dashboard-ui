@@ -20,10 +20,10 @@ import {
   DEFAULT_BUNDLE_FROM,
   emptyFilters,
   organisationColor,
-} from '@shared/backend/models/network.model';
-import { NetworkService } from '@shared/backend/services/network-service';
+} from '@shared/models/network.model';
+import { NetworkService } from '@shared/services/network-service';
 import * as d3 from 'd3';
-import { NO_VALUE, matchesFilters } from '@shared/backend/utils/network-filter.utils';
+import { NO_VALUE, matchesFilters } from '@shared/utils/network-filter.utils';
 
 @Component({
   selector: 'app-network',
