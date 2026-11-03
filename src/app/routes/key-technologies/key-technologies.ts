@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, effect, OnDestroy, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, signal, untracked, viewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { KeyTechnologyService } from '@shared/services/key-technologies-service';
 import { NetworkService } from '@shared/services/network-service';
-import { TechnologyField, KeyTechnology, TechnologyViewModel } from '@shared/models/key-technologies.model';
+import { TechnologyField, KeyTechnology } from '@shared/models/key-technologies.model';
 import { NetworkFilters, OrganisationSelection, ProjectSelection, emptyFilters } from '@shared/models/network.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Network } from '../../features/network/network/network';
@@ -13,20 +13,58 @@ import { Metrics } from '../../features/metrics/metrics';
 import { Search } from '../../features/search/search/search';
 import { Spinner } from '../../ui/spinner/spinner';
 import { Toggle, ToggleOption } from '../../ui/toggle/toggle';
+import { PageHead } from '../../ui/page-head/page-head';
 import { originState } from '@shared/navigation/origin';
 
-type D3Node = d3.HierarchyRectangularNode<TechnologyViewModel>;
 type Mode = 'technologies' | 'network';
 type FieldMode = 'tiles' | 'metrics' | 'search';
 
+interface TileItem {
+  id: string;
+  label: string;
+  projects: number;
+  color: string;
+  accent: string;
+  children?: TileItem[];
+}
+
+interface Tile extends TileItem {
+  count: string;
+  share: string;
+  bar: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  light: boolean;
+  pad: number;
+  labelSize: number;
+  countSize: number;
+  lines: 1 | 2 | 3;
+  icon: boolean;
+  showBar: boolean;
+  showShare: boolean;
+}
+
+const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
+
+function isLight(hex: string): boolean {
+  const value = hex.replace('#', '');
+  if (value.length !== 6) return false;
+
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16) / 255);
+  const channel = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b) > 0.45;
+}
+
 @Component({
   selector: 'app-key-technologies',
-  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Metrics, Search, Spinner, Toggle],
+  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Metrics, Search, Spinner, Toggle, PageHead],
   templateUrl: './key-technologies.html',
   styleUrls: ['./key-technologies.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class KeyTechnologies implements OnDestroy {
+export class KeyTechnologies {
   readonly modes: readonly ToggleOption<Mode>[] = [
     { value: 'technologies', label: 'Technologien' },
     { value: 'network', label: 'Netzwerk' },
@@ -50,12 +88,78 @@ export class KeyTechnologies implements OnDestroy {
   selectedProject = signal<ProjectSelection | null>(null);
   selectRequest = signal<{ id: string } | null>(null);
 
-  private width = 0;
-  private height = 0;
-  private allFields: TechnologyField[] = [];
-  private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  private g!: d3.Selection<SVGGElement, unknown, null, undefined>;
-  private resizeObserver!: ResizeObserver;
+  hovered = signal<string | null>(null);
+
+  private readonly chart = viewChild<ElementRef<HTMLDivElement>>('chart');
+  private readonly size = signal({ width: 0, height: 0 });
+
+  private readonly items = computed<TileItem[]>(() => {
+    const field = this.selectedField();
+
+    if (field) {
+      return field.technologies.map((t: KeyTechnology) => ({
+        id: t.short || t.label,
+        label: t.label,
+        projects: t.projects,
+        color: field.style.color,
+        accent: field.style.accent,
+      }));
+    }
+
+    return (this.keyTechnologyService.data.value() ?? []).map((f) => ({
+      id: f._id.$oid,
+      label: f.label,
+      projects: f.projects,
+      color: f.style.color,
+      accent: f.style.accent,
+    }));
+  });
+
+  readonly tiles = computed<Tile[]>(() => {
+    const { width, height } = this.size();
+    const items = this.items();
+    if (!width || !height || !items.length) return [];
+
+    const total = items.reduce((sum, i) => sum + i.projects, 0);
+    const int = (n: number) => n.toLocaleString('de-AT');
+    const pct = (n: number) => `${((n / total) * 100).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+    const withIcons = !this.selectedField();
+
+    const root = d3
+      .hierarchy<TileItem>({ id: 'root', label: 'root', projects: 0, color: '', accent: '', children: items })
+      .sum((d) => (d.children ? 0 : Math.max(Math.sqrt(d.projects || 1), 3)))
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+
+    d3.treemap<TileItem>().size([width, height]).paddingInner(8).round(true).tile(d3.treemapSquarify.ratio(1))(root);
+
+    return (root.leaves() as d3.HierarchyRectangularNode<TileItem>[]).map((node) => {
+      const w = node.x1 - node.x0;
+      const h = node.y1 - node.y0;
+      const pad = h < 52 ? 6 : h < 84 ? 10 : 16;
+      const labelSize = clamp(Math.round(Math.min(h * 0.2, (w - 2 * pad) * 0.1)), 9, 15);
+      const countSize = clamp(labelSize - 1, 9, 14);
+      const lines = h >= 112 ? 3 : h >= 74 ? 2 : 1;
+
+      return {
+        ...node.data,
+        count: int(node.data.projects),
+        share: total ? pct(node.data.projects) : '',
+        bar: total ? (node.data.projects / total) * 100 : 0,
+        x: node.x0,
+        y: node.y0,
+        w,
+        h,
+        light: isLight(node.data.color),
+        pad,
+        labelSize,
+        countSize,
+        lines: lines as 1 | 2 | 3,
+        icon: withIcons && h >= 112 && w >= 150,
+        showBar: h >= 46 && w >= 112,
+        showShare: w >= 150 && h >= 40,
+      };
+    });
+  });
 
   constructor(
     public keyTechnologyService: KeyTechnologyService,
@@ -68,8 +172,6 @@ export class KeyTechnologies implements OnDestroy {
       if (!fields) return;
 
       untracked(() => {
-        this.allFields = fields;
-
         const params = this.route.snapshot.queryParamMap;
         const fieldID = params.get('field');
         const field = fieldID ? (fields.find((f) => f._id.$oid === fieldID) ?? null) : null;
@@ -77,35 +179,33 @@ export class KeyTechnologies implements OnDestroy {
         const view = params.get('view');
         this.fieldMode.set(view === 'metrics' || view === 'search' ? view : 'tiles');
 
-        if (field) {
-          this.mode.set(params.get('mode') === 'network' ? 'network' : 'technologies');
-          this.selectedField.set(field);
-          if (this.mode() === 'network') return;
-          this.withChart(() => this.renderTechnologies(field));
-        } else {
-          this.mode.set('technologies');
-          this.selectedField.set(null);
-          if (this.fieldMode() !== 'tiles') return;
-          this.withChart(() => this.renderFields(fields));
-        }
+        this.selectedField.set(field);
+        this.mode.set(field && params.get('mode') === 'network' ? 'network' : 'technologies');
       });
     });
-  }
 
-  ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
+    effect((onCleanup) => {
+      const el = this.chart()?.nativeElement;
+      if (!el) {
+        this.size.set({ width: 0, height: 0 });
+        return;
+      }
+
+      const observer = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        this.size.set({ width: Math.round(width), height: Math.round(height) });
+      });
+
+      observer.observe(el);
+      onCleanup(() => observer.disconnect());
+    });
   }
 
   backToFields(): void {
     this.mode.set('technologies');
+    this.selectedField.set(null);
     this.closePanels();
-
-    if (this.fieldMode() !== 'tiles') {
-      this.selectedField.set(null);
-      this.syncQueryParams();
-    } else {
-      this.withChart(() => this.renderFields(this.allFields));
-    }
+    this.syncQueryParams();
   }
 
   setMode(next: Mode): void {
@@ -114,15 +214,6 @@ export class KeyTechnologies implements OnDestroy {
     this.mode.set(next);
     this.closePanels();
     this.syncQueryParams();
-
-    const field = this.selectedField();
-    if (!field) return;
-
-    if (next === 'network') {
-      this.resizeObserver?.disconnect();
-    } else {
-      this.withChart(() => this.renderTechnologies(field));
-    }
   }
 
   setFieldMode(next: FieldMode): void {
@@ -130,22 +221,27 @@ export class KeyTechnologies implements OnDestroy {
 
     this.fieldMode.set(next);
     this.syncQueryParams();
-
-    if (next !== 'tiles') {
-      this.resizeObserver?.disconnect();
-    } else {
-      this.withChart(() => this.renderFields(this.allFields));
-    }
   }
 
   onFieldSelected(id: string): void {
-    const field = this.allFields.find((f) => f._id.$oid === id);
+    const field = (this.keyTechnologyService.data.value() ?? []).find((f) => f._id.$oid === id);
     if (!field) return;
 
     this.mode.set('technologies');
     this.selectedField.set(field);
     this.syncQueryParams();
-    this.withChart(() => this.renderTechnologies(field));
+  }
+
+  open(entry: TileItem): void {
+    const field = this.selectedField();
+    if (!field) {
+      this.onFieldSelected(entry.id);
+      return;
+    }
+
+    this.router.navigate(['/key-technologies', field._id.$oid, entry.id], {
+      queryParams: { view: this.fieldMode() === 'tiles' ? null : this.fieldMode() },
+    });
   }
 
   private syncQueryParams(): void {
@@ -183,209 +279,5 @@ export class KeyTechnologies implements OnDestroy {
 
   openProject(id: string): void {
     this.router.navigate(['/project', id], originState(this.router.url, 'Zurück zum Netzwerk'));
-  }
-
-  private withChart(render: () => void, tries = 20): void {
-    const el = document.getElementById('key-technologies');
-
-    if (el && el.clientWidth) {
-      this.width = el.clientWidth;
-      this.height = el.clientHeight;
-      this.initChart();
-      render();
-      this.attachResizeObserver();
-      return;
-    }
-
-    if (tries <= 0) {
-      console.warn('withChart: Chart-Div nie erschienen');
-      return;
-    }
-    requestAnimationFrame(() => this.withChart(render, tries - 1));
-  }
-
-  private attachResizeObserver(): void {
-    this.resizeObserver?.disconnect();
-    const el = document.getElementById('key-technologies');
-    if (!el) return;
-
-    this.resizeObserver = new ResizeObserver(() => {
-      if (this.showNetwork() || this.showMetrics() || this.showSearch()) return;
-      this.width = el.clientWidth;
-      this.height = el.clientHeight;
-      this.svg.attr('width', this.width).attr('height', this.height);
-
-      const currentField = this.selectedField();
-      if (currentField) {
-        this.renderTechnologies(currentField);
-      } else {
-        this.renderFields(this.allFields);
-      }
-    });
-    this.resizeObserver.observe(el);
-  }
-
-  private initChart(): void {
-    const el = document.getElementById('key-technologies')!;
-    el.innerHTML = '';
-
-    this.svg = d3.select(el).append('svg').attr('width', this.width).attr('height', this.height);
-
-    const defs = this.svg.append('defs');
-    const filter = defs.append('filter').attr('id', 'cell-shadow').attr('x', '-20%').attr('y', '-20%').attr('width', '140%').attr('height', '140%');
-
-    filter.append('feDropShadow').attr('dx', '0').attr('dy', '4').attr('stdDeviation', '8').attr('flood-color', 'rgba(0,0,0,0.35)');
-
-    this.g = this.svg.append('g');
-  }
-
-  private wrapText(selection: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown>, maxWidth: (d: D3Node) => number, lineHeight: number): void {
-    selection.each(function (d) {
-      const text = d3.select(this);
-      const words = (text.text() || '').split(/\s+/).reverse();
-      const x = +text.attr('x');
-      const y = +text.attr('y');
-      text.text(null);
-      let line: string[] = [];
-      let lineNumber = 0;
-      let tspan = text.append('tspan').attr('x', x).attr('y', y);
-      let word: string | undefined;
-
-      while ((word = words.pop()) !== undefined) {
-        line.push(word);
-        tspan.text(line.join(' '));
-
-        if ((tspan.node()?.getComputedTextLength() ?? 0) > maxWidth(d)) {
-          line.pop();
-          tspan.text(line.join(' '));
-          line = [word];
-          tspan = text
-            .append('tspan')
-            .attr('x', x)
-            .attr('y', y)
-            .attr('dy', `${++lineNumber * lineHeight}px`)
-            .text(word);
-        }
-      }
-    });
-  }
-
-  private renderSquares(leaves: D3Node[], onClick: (d: D3Node) => void): void {
-    const nodes = this.g
-      .selectAll<SVGGElement, D3Node>('g')
-      .data(leaves)
-      .join('g')
-      .attr('transform', (d) => `translate(${d.x0},${d.y0})`)
-      .style('cursor', 'pointer')
-      .on('click', (_, d) => onClick(d))
-      .on('mouseover', function (_, d) {
-        d3.select(this)
-          .select('rect')
-          .style('fill', d.data.accentColor ?? d.data.color ?? '#ccc');
-      })
-      .on('mouseout', function (_, d) {
-        d3.select(this)
-          .select('rect')
-          .style('fill', d.data.color ?? '#ccc');
-      });
-
-    nodes
-      .append('rect')
-      .attr('width', (d) => d.x1 - d.x0)
-      .attr('height', (d) => d.y1 - d.y0)
-      .attr('rx', 8)
-      .style('fill', (d) => d.data.color ?? '#ccc')
-      .style('transition', 'fill 0.08s ease');
-
-    nodes
-      .append('text')
-      .attr('x', 12)
-      .attr('y', 25)
-      .attr('fill', '#fff')
-      .style('font-size', '16px')
-      .style('font-weight', '600')
-      .style('pointer-events', 'none')
-      .text((d) => d.data.label)
-      .call((sel) => this.wrapText(sel as d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown>, (d) => d.x1 - d.x0 - 16, 20));
-
-    nodes
-      .append('text')
-      .attr('x', 8)
-      .attr('y', (d) => d.y1 - d.y0 - 8)
-      .attr('fill', '#fff')
-      .style('font-size', '12px')
-      .style('pointer-events', 'none')
-      .text((d) => `${d.data.projects} Projekte`);
-  }
-
-  private layout(root: d3.HierarchyNode<TechnologyViewModel>): void {
-    d3.treemap<TechnologyViewModel>().size([this.width, this.height]).paddingInner(8).paddingOuter(12).tile(d3.treemapSquarify.ratio(1))(root as any);
-  }
-
-  private buildFieldHierachy(fields: TechnologyField[]): TechnologyViewModel {
-    return {
-      label: 'root',
-      projects: fields.reduce((sum, f) => sum + f.projects, 0),
-      children: fields.map((f) => ({
-        label: f.label,
-        projects: f.projects,
-        color: f.style.color,
-        accentColor: f.style.accent,
-        fieldID: f._id.$oid,
-        value: Math.max(Math.sqrt(f.projects ?? 1), 1),
-      })),
-    };
-  }
-
-  private renderFields(fields: TechnologyField[]): void {
-    this.selectedField.set(null);
-    this.g.selectAll('*').remove();
-    this.syncQueryParams();
-
-    const root = d3
-      .hierarchy<TechnologyViewModel>(this.buildFieldHierachy(fields))
-      .sum((d) => d.value ?? 0)
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-    this.layout(root);
-
-    this.renderSquares(root.leaves() as D3Node[], (d) => {
-      const field = fields.find((f) => f._id.$oid === d.data.fieldID);
-      if (field) this.renderTechnologies(field);
-    });
-  }
-
-  private buildTechHierachy(field: TechnologyField): TechnologyViewModel {
-    return {
-      label: 'root',
-      projects: field.projects,
-      children: field.technologies.map((t: KeyTechnology) => ({
-        label: t.label,
-        projects: t.projects,
-        color: field.style.color,
-        accentColor: field.style.accent,
-        techID: t.short || t.label,
-        value: Math.max(Math.sqrt(t.projects ?? 1), 3),
-      })),
-    };
-  }
-
-  private renderTechnologies(field: TechnologyField): void {
-    this.selectedField.set(field);
-    this.g.selectAll('*').remove();
-    this.syncQueryParams();
-
-    const root = d3
-      .hierarchy<TechnologyViewModel>(this.buildTechHierachy(field))
-      .sum((d) => d.value ?? 0)
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-    this.layout(root);
-
-    this.renderSquares(root.leaves() as D3Node[], (d) => {
-      if (d.data.techID) {
-        this.router.navigate(['/key-technologies', field._id.$oid, d.data.techID], {
-          queryParams: { view: this.fieldMode() === 'tiles' ? null : this.fieldMode() },
-        });
-      }
-    });
   }
 }

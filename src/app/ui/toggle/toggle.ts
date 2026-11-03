@@ -14,13 +14,13 @@ export interface ToggleOption<T extends string> {
     }
   `,
   template: `
-    <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
+    <div class="flex shrink-0 items-center gap-0.5 rounded-full border border-gray-300 bg-white p-0.5">
       @for (option of options(); track option.value) {
         <button
           type="button"
           (click)="changed.emit(option.value)"
           [class]="option.value === value() ? selected : idle"
-          class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
+          class="h-7 cursor-pointer rounded-full px-4 text-xs transition-colors"
         >
           {{ option.label }}
         </button>
@@ -33,6 +33,6 @@ export class Toggle<T extends string> {
   readonly value = input.required<T>();
   readonly changed = output<T>();
 
-  protected readonly selected = 'bg-white text-gray-800 shadow-sm font-medium';
-  protected readonly idle = 'text-gray-500 hover:text-gray-700';
+  protected readonly selected = 'bg-gray-900 text-white font-medium';
+  protected readonly idle = 'text-gray-500 hover:text-gray-900';
 }

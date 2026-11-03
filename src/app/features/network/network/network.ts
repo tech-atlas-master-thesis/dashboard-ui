@@ -91,7 +91,7 @@ export class Network implements OnDestroy {
 
   private readonly bundleFill = '#f1f3f6';
   private readonly bundleStroke = '#9ca3af';
-  private readonly fringeFill = '#fafafa';
+  private readonly fringeFill = '#fff';
 
   private linkWidth = (l: NetworkLink) => (l.lead ? 2.5 : 1);
   private linkColor = (l: NetworkLink) => (l.lead ? this.leadColor : '#64748b');

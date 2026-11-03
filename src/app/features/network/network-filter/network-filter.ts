@@ -15,6 +15,7 @@ import { Icon } from '@ui/icon/icon';
 import { FilterChip, FilterChipMeta } from '@ui/filter/filter-chip/filter-chip';
 import { FilterOption, FilterOptionView } from '@ui/filter/filter-option/filter-option';
 import { Popover, PopoverWidth } from '@ui/filter/popover/popover';
+import { ClickOutside } from '@ui/click-outside/click-outside';
 
 export type FilterKey = 'date' | 'statuses' | 'organisationTypes' | 'programmes' | 'bundling';
 
@@ -51,7 +52,7 @@ const byCount = (a: { count: number }, b: { count: number }) => b.count - a.coun
 
 @Component({
   selector: 'app-network-filter',
-  imports: [Icon, FilterChip, Popover, FilterOption, HitRow],
+  imports: [Icon, FilterChip, Popover, FilterOption, HitRow, ClickOutside],
   templateUrl: './network-filter.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -216,6 +217,13 @@ export class NetworkFilter {
 
   meta(key: FilterKey): FilterMeta {
     return FILTERS[key];
+  }
+
+  popoverTitle(key: FilterKey): string {
+    const meta = FILTERS[key];
+    const base = meta.popoverTitle ?? meta.fullLabel ?? meta.label;
+    const summary = this.filterSummary(key);
+    return summary ? `${base} · ${summary}` : base;
   }
 
   private isListFilter(key: FilterKey): key is ListFilterKey {
@@ -412,12 +420,6 @@ export class NetworkFilter {
     if (key === 'organisationTypes') return organisationTypeName(value);
     return this.programmes().find((p) => p.id === value)?.name ?? value;
   }
-
-  readonly chosenTypeColors = computed(() =>
-    this._filters()
-      .organisationTypes.slice(0, 3)
-      .map((type) => (type === NO_VALUE ? '#d1d5db' : organisationColor(type))),
-  );
 
   isSet(key: FilterKey): boolean {
     const f = this._filters();

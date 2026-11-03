@@ -1,14 +1,63 @@
-<div class="flex flex-row gap-2">
-  <select [(ngModel)]="datasetState.selectedPipeline" class="font-light text-xs">
-    <option value="">Pipeline</option>
-    @for (pipeline of datasetState.pipelines.value(); track pipeline) {
-      <option [value]="pipeline">{{ pipeline }}</option>
-    }
-  </select>
-  <select [(ngModel)]="datasetState.selectedDataset" [disabled]="datasetState.selectedPipeline() === ''" class="font-light text-xs">
-    <option value="">Datensatz</option>
-    @for (dataset of datasetState.datasets.value(); track dataset.pipeline) {
-      <option [value]="dataset._id">{{ dataset.created.at | date: 'dd.MM.yyyy HH:mm' }}</option>
-    }
-  </select>
+<div class="relative" appClickOutside (clickedOutside)="close()" [appClickOutsideEnabled]="open()">
+  <button
+    type="button"
+    (click)="toggle()"
+    class="relative z-50 flex h-7 cursor-pointer items-center justify-between gap-2 rounded-2xl bg-gray-900 px-3 text-xs text-white"
+  >
+    <p>Datensatz</p>
+    <app-icon name="chevron" class="text-white" />
+  </button>
+
+  @if (open()) {
+    <div class="absolute top-10 right-0 z-50 w-150 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+      <div class="grid grid-cols-2">
+        <div class="border-r border-gray-100 p-3">
+          <p class="mb-2 text-xs text-gray-900">Pipeline</p>
+
+          @for (pipeline of datasetState.pipelines.value(); track pipeline) {
+            <button
+              type="button"
+              (click)="pickPipeline(pipeline)"
+              [class]="pipeline === datasetState.selectedPipeline() ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'"
+              class="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-xs"
+            >
+              <p class="min-w-0 flex-1 truncate">{{ pipeline }}</p>
+            </button>
+          } @empty {
+            <p class="px-2.5 py-2 text-xs text-gray-400">Keine Pipelines.</p>
+          }
+        </div>
+
+        <div class="p-3">
+          <p class="mb-2 text-xs text-gray-900">Datensatz</p>
+
+          @for (dataset of datasets(); track dataset._id; let first = $first) {
+            <button
+              type="button"
+              (click)="pickDataset(dataset._id)"
+              (mouseenter)="peeked.set(dataset._id)"
+              (mouseleave)="peeked.set(null)"
+              [class]="dataset._id === datasetState.selectedDataset() ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'"
+              class="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-xs"
+            >
+              <p class="min-w-0 flex-1 truncate tabular-nums">{{ dataset.created.at | date: 'dd.MM.yyyy HH:mm' }}</p>
+            </button>
+          } @empty {
+            <p class="px-2.5 py-2 text-xs text-gray-400">
+              {{ datasetState.selectedPipeline() ? 'Keine Datensätze.' : 'Zuerst eine Pipeline wählen.' }}
+            </p>
+          }
+        </div>
+      </div>
+
+      <dl class="grid grid-cols-3 gap-5 border-t border-gray-200 bg-white px-5.5 py-3.5">
+        @for (kpi of kpis(); track kpi.label) {
+          <div class="flex min-w-0 flex-col gap-0.5">
+            <dt class="text-xs text-gray-500">{{ kpi.label }}</dt>
+            <dd class="truncate text-[19px] tabular-nums text-gray-900">{{ kpi.value }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+  }
 </div>

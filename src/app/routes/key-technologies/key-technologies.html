@@ -1,50 +1,38 @@
-<div class="h-full w-full p-3 flex flex-col gap-2">
+<div class="flex h-full w-full flex-col gap-3 px-10 py-3">
   @if (keyTechnologyService.data.isLoading()) {
-    <div class="flex-1 flex flex-col items-center justify-center gap-4">
+    <div class="flex flex-1 flex-col items-center justify-center gap-4">
       <app-spinner size="lg" />
-      <p class="text-gray-400 font-light text-sm">Wird geladen ...</p>
+      <p class="text-sm font-light text-gray-500">Wird geladen ...</p>
     </div>
   } @else {
-    <div class="flex items-center justify-between gap-4 shrink-0 h-8 px-3">
-      <div class="flex items-center gap-4">
-        @if (selectedField()) {
-          <button (click)="backToFields()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">← Zurück</button>
-          <div class="w-px h-5 bg-gray-300"></div>
-          <p class="text-xs font-medium px-2 py-1 rounded-2xl text-white" [style.background]="selectedField()!.style.color">
-            {{ selectedField()!.label }}
-          </p>
-        }
-      </div>
+    <app-page-head [label]="selectedField()?.label ?? ''" [color]="selectedField()?.style?.color ?? ''" (back)="backToFields()">
+      @if (showNetwork()) {
+        <app-network-filter
+          [data]="networkService.data.value() ?? null"
+          [filters]="filters()"
+          (filtersChange)="filters.set($event)"
+          (selectRequested)="selectRequest.set($event)"
+        >
+        </app-network-filter>
+      }
 
-      <div class="flex items-center gap-4 shrink-0">
-        @if (showNetwork()) {
-          <app-network-filter
-            [data]="networkService.data.value() ?? null"
-            [filters]="filters()"
-            (filtersChange)="filters.set($event)"
-            (selectRequested)="selectRequest.set($event)"
-          >
-          </app-network-filter>
-        }
-
-        @if (selectedField()) {
-          <app-toggle [options]="modes" [value]="mode()" (changed)="setMode($event)" />
-        } @else {
-          <app-toggle [options]="fieldModes" [value]="fieldMode()" (changed)="setFieldMode($event)" />
-        }
-      </div>
-    </div>
+      @if (selectedField()) {
+        <app-toggle [options]="modes" [value]="mode()" (changed)="setMode($event)" />
+      } @else {
+        <app-toggle [options]="fieldModes" [value]="fieldMode()" (changed)="setFieldMode($event)" />
+      }
+    </app-page-head>
 
     @if (showMetrics()) {
-      <div class="flex-1 min-h-0 w-full">
+      <div class="min-h-0 w-full flex-1">
         <app-metrics (fieldSelected)="onFieldSelected($event)"></app-metrics>
       </div>
     } @else if (showSearch()) {
-      <div class="flex-1 min-h-0 w-full">
+      <div class="min-h-0 w-full flex-1">
         <app-search></app-search>
       </div>
     } @else if (showNetwork()) {
-      <div class="flex-1 min-h-0 w-full relative">
+      <div class="relative min-h-0 w-full flex-1">
         <app-network
           [filterByField]="selectedField()!._id.$oid"
           [filters]="filters()"
@@ -55,7 +43,7 @@
         </app-network>
 
         @if (selectedOrganisation()) {
-          <div class="absolute bottom-3 inset-x-0 z-10 px-3">
+          <div class="absolute inset-x-0 bottom-3 z-10 px-3">
             <app-organisation-preview
               [organisation]="selectedOrganisation()!.organisation"
               [projectCount]="selectedOrganisation()!.projectCount"
@@ -68,13 +56,67 @@
         }
 
         @if (selectedProject()) {
-          <div class="absolute bottom-3 inset-x-0 z-10 px-3">
+          <div class="absolute inset-x-0 bottom-3 z-10 px-3">
             <app-project-preview [selection]="selectedProject()!" (closed)="closePanels()" (detailsRequested)="openProject($event)"></app-project-preview>
           </div>
         }
       </div>
     } @else {
-      <div id="key-technologies" class="flex-1 min-h-0 w-full"></div>
+      <div #chart class="relative min-h-0 w-full flex-1">
+        @for (tile of tiles(); track tile.id) {
+          <button
+            type="button"
+            (click)="open(tile)"
+            (mouseenter)="hovered.set(tile.id)"
+            (mouseleave)="hovered.set(null)"
+            [style.left.px]="tile.x"
+            [style.top.px]="tile.y"
+            [style.width.px]="tile.w"
+            [style.height.px]="tile.h"
+            [style.padding.px]="tile.pad"
+            [style.background]="hovered() === tile.id ? tile.accent : tile.color"
+            [style.color]="tile.light ? '#1F1A08' : '#FFFFFF'"
+            [class.justify-between]="tile.icon"
+            [class.justify-end]="!tile.icon"
+            class="absolute flex cursor-pointer flex-col gap-1.5 overflow-hidden rounded-2xl text-left transition-colors"
+          >
+            @if (tile.icon) {
+              <span class="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg border border-dashed border-current text-[9px] opacity-60"
+                >SVG</span
+              >
+            }
+
+            <span class="flex min-w-0 flex-col gap-1.5">
+              <span
+                class="leading-tight font-semibold"
+                [style.fontSize.px]="tile.labelSize"
+                [class.truncate]="tile.lines === 1"
+                [class.line-clamp-2]="tile.lines === 2"
+                [class.line-clamp-3]="tile.lines === 3"
+                >{{ tile.label }}</span
+              >
+
+              <span class="flex items-center gap-2 text-xs">
+                <span class="shrink-0 font-semibold tabular-nums">{{ tile.count }}</span>
+
+                @if (tile.showBar) {
+                  <span class="h-0.75 flex-1 rounded-full" [style.background]="tile.light ? 'rgba(31,26,8,0.18)' : 'rgba(255,255,255,0.25)'">
+                    <span
+                      class="block h-0.75 rounded-full"
+                      [style.width.%]="tile.bar"
+                      [style.background]="tile.light ? 'rgba(31,26,8,0.7)' : 'rgba(255,255,255,0.85)'"
+                    ></span>
+                  </span>
+                }
+
+                @if (tile.showShare) {
+                  <span class="shrink-0 tabular-nums opacity-80" [class.ml-auto]="!tile.showBar">{{ tile.share }}</span>
+                }
+              </span>
+            </span>
+          </button>
+        }
+      </div>
     }
   }
 </div>

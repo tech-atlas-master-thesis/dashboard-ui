@@ -9,12 +9,13 @@ import { NetworkFilter } from '../../features/network/network-filter/network-fil
 import { OrganisationPreview } from '../../features/previews/organisation-preview/organisation-preview';
 import { ProjectPreview } from '../../features/previews/project-preview/project-preview';
 import { Spinner } from '../../ui/spinner/spinner';
+import { PageHead } from '../../ui/page-head/page-head';
 import { useOrigin } from '@shared/navigation/origin';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-key-technology-detail',
-  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Spinner],
+  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Spinner, PageHead],
   templateUrl: './key-technology-detail.html',
   styleUrl: './key-technology-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

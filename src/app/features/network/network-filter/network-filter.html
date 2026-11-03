@@ -1,15 +1,11 @@
-<div class="relative">
-  @if (openFilter()) {
-    <button type="button" (click)="closeAll()" tabindex="-1" class="fixed inset-0 z-0 cursor-default"></button>
-  }
-
+<div class="relative" appClickOutside (clickedOutside)="closeAll()" [appClickOutsideEnabled]="openFilter() !== null">
   <div class="relative flex flex-row z-10 items-center gap-2">
     <button
       type="button"
       (click)="openSearch()"
       title="Suchen (⌘K)"
       aria-label="Organisation oder Projekt suchen"
-      class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+      class="h-7 px-3 rounded-2xl border border-gray-300 bg-white text-xs text-gray-600 hover:border-gray-400 hover:text-gray-900 cursor-pointer flex items-center gap-2"
     >
       Suchen
       <app-icon name="search" class="text-gray-400" />
@@ -17,18 +13,11 @@
 
     @for (key of visibleFilters(); track key) {
       <div class="relative">
-        <app-filter-chip
-          [meta]="meta(key)"
-          [set]="isSet(key)"
-          [summary]="filterSummary(key)"
-          [typeColors]="key === 'organisationTypes' ? chosenTypeColors() : []"
-          (toggled)="toggleFilter(key)"
-          (cleared)="clear(key)"
-        />
+        <app-filter-chip [meta]="meta(key)" [set]="isSet(key)" (toggled)="toggleFilter(key)" (cleared)="clear(key)" />
 
         @if (openFilter() === key) {
           <app-popover
-            [title]="meta(key).popoverTitle ?? meta(key).fullLabel ?? meta(key).label"
+            [title]="popoverTitle(key)"
             [width]="meta(key).width"
             [resetLabel]="meta(key).resetLabel ?? ''"
             [scroll]="meta(key).scroll === true"
@@ -72,7 +61,7 @@
                     (input)="setBundleFrom($any($event.target).value)"
                     class="w-36 accent-gray-500 cursor-pointer"
                   />
-                  <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{ int(bundleFrom()) }}</span>
+                  <p class="w-8 text-right text-xs text-gray-500 tabular-nums">{{ int(bundleFrom()) }}</p>
                 </div>
 
                 <p class="text-[11px] text-gray-400 leading-snug">
@@ -111,12 +100,10 @@
       type="button"
       (click)="reset()"
       [disabled]="!filtered()"
-      [class.opacity-0]="!filtered()"
-      [class.pointer-events-none]="!filtered()"
       title="Alle Filter zurücksetzen"
-      class="w-6 h-6 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
+      class="w-6 h-6 rounded-2xl text-gray-900 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0 disabled:text-gray-300 disabled:cursor-default disabled:hover:text-gray-300 disabled:hover:bg-transparent"
     >
-      <app-icon name="reset" [size]="13" [weight]="2" />
+      <app-icon name="reset" [size]="13" />
     </button>
   </div>
 
@@ -147,7 +134,7 @@
             type="button"
             (click)="search() ? clearSearch() : closeSearch()"
             [title]="search() ? 'Suche leeren' : 'Schließen'"
-            class="w-6 h-6 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
+            class="w-6 h-6 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
           >
             <app-icon name="close" [size]="12" />
           </button>

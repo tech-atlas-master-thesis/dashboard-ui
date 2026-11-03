@@ -18,29 +18,19 @@ export interface FilterChipMeta {
   `,
   template: `
     @if (set()) {
-      <div class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5">
-        <button type="button" (click)="toggled.emit()" class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0">
-          <span class="text-gray-200 shrink-0">{{ label() }}</span>
-
-          @if (colors().length) {
-            <span class="flex items-center shrink-0">
-              @for (color of colors(); track $index) {
-                <span class="w-2.5 h-2.5 rounded-full ring-2 ring-gray-500 -ml-1 first:ml-0" [style.background]="color"></span>
-              }
-            </span>
-          }
-
-          <span class="truncate" [class.tabular-nums]="numeric()">{{ summary() }}</span>
-          <app-icon name="chevron" class="text-gray-300" />
+      <div class="flex h-7 items-center gap-1.5 rounded-full bg-gray-900 pr-1 pl-3 text-xs text-white">
+        <button type="button" (click)="toggled.emit()" class="flex shrink-0 cursor-pointer items-center gap-2">
+          {{ fullLabel() }}
+          <app-icon name="chevron" class="text-white/70" />
         </button>
 
-        <span class="w-px h-4 bg-gray-400"></span>
+        <span class="h-4 w-px bg-white/25"></span>
 
         <button
           type="button"
           (click)="cleared.emit()"
           [title]="label() + ' zurücksetzen'"
-          class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
+          class="flex cursor-pointer items-center px-1.5 text-white/70 hover:text-white"
         >
           <app-icon name="close" />
         </button>
@@ -49,7 +39,7 @@ export interface FilterChipMeta {
       <button
         type="button"
         (click)="toggled.emit()"
-        class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
+        class="flex h-7 cursor-pointer items-center gap-2 rounded-full border border-gray-300 bg-white px-3 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-900"
       >
         {{ fullLabel() }}
         <app-icon name="chevron" class="text-gray-400" />
@@ -59,14 +49,10 @@ export interface FilterChipMeta {
 })
 export class FilterChip {
   readonly meta = input.required<FilterChipMeta>();
-  readonly summary = input('');
   readonly set = input(false);
-  readonly typeColors = input<string[]>([]);
   readonly toggled = output<void>();
   readonly cleared = output<void>();
 
-  protected readonly colors = computed(() => this.typeColors().slice(0, 3));
   protected readonly label = computed(() => this.meta().label);
   protected readonly fullLabel = computed(() => this.meta().fullLabel || this.meta().label);
-  protected readonly numeric = computed(() => this.meta().numeric === true);
 }
