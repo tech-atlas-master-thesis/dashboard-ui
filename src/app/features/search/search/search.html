@@ -1,21 +1,7 @@
 <div class="h-full w-full flex flex-col items-center gap-3 px-3 pt-8 overflow-y-auto">
   <div class="w-full max-w-2xl flex flex-col gap-3">
-    <div
-      class="h-11 px-4 rounded-2xl border border-gray-200 bg-white shadow-sm flex items-center gap-3 focus-within:border-gray-300"
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        class="text-gray-400 shrink-0"
-      >
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-      </svg>
+    <div class="h-11 px-4 rounded-2xl border border-gray-200 bg-white shadow-sm flex items-center gap-3 focus-within:border-gray-300">
+      <app-icon name="search" [size]="16" class="text-gray-400" />
       <input
         id="dataset-search"
         type="text"
@@ -34,31 +20,18 @@
         title="Suche leeren"
         class="w-6 h-6 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
       >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-        >
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-        </svg>
+        <app-icon name="close" [size]="12" />
       </button>
     </div>
 
     @if (!searching()) {
       <p class="px-1 text-xs text-gray-400">
-        Sucht über alle Organisationen und Projekte des Datensatzes. Ein Treffer führt direkt auf
-        seine Detailseite. Ab {{ int(minLength) }} Zeichen.
+        Sucht über alle Organisationen und Projekte des Datensatzes. Ein Treffer führt direkt auf seine Detailseite. Ab
+        {{ int(minLength) }} Zeichen.
       </p>
     } @else if (loading() || pending()) {
       <div class="flex justify-center py-10">
-        <div
-          class="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin"
-        ></div>
+        <app-spinner />
       </div>
     } @else if (!results().total) {
       <p class="px-1 text-xs text-gray-400">Nichts gefunden.</p>
@@ -70,24 +43,7 @@
             <span class="tabular-nums">{{ int(results().organisations.length) }}</span>
           </p>
           @for (o of results().organisations; track o.id) {
-            <button
-              type="button"
-              [id]="'hit-' + o.id"
-              (click)="open('organisation', o.id)"
-              [class.bg-gray-100]="activeId() === o.id"
-              class="flex items-center gap-2.5 h-10 px-2 text-left cursor-pointer rounded-xl hover:bg-gray-50"
-            >
-              <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="o.color"></span>
-              <span class="flex-1 min-w-0 text-xs truncate text-gray-600" [title]="o.label">
-                @for (part of o.parts; track $index) {
-                  <span [class]="part.hit ? 'font-semibold text-gray-900' : ''">{{
-                    part.text
-                  }}</span>
-                }
-              </span>
-              <span class="text-[10px] text-gray-400 shrink-0">{{ o.hint }}</span>
-              <span class="text-sm text-gray-300 shrink-0">→</span>
-            </button>
+            <app-hit-row [hit]="o" kind="organisation" [active]="activeId() === o.id" (picked)="open('organisation', o.id)" />
           }
         }
 
@@ -97,24 +53,7 @@
             <span class="tabular-nums">{{ int(results().projects.length) }}</span>
           </p>
           @for (p of results().projects; track p.id) {
-            <button
-              type="button"
-              [id]="'hit-' + p.id"
-              (click)="open('project', p.id)"
-              [class.bg-gray-100]="activeId() === p.id"
-              class="flex items-center gap-2.5 h-10 px-2 text-left cursor-pointer rounded-xl hover:bg-gray-50"
-            >
-              <span class="w-2.5 h-2.5 rounded-xs shrink-0 bg-slate-600"></span>
-              <span class="flex-1 min-w-0 text-xs truncate text-gray-600" [title]="p.label">
-                @for (part of p.parts; track $index) {
-                  <span [class]="part.hit ? 'font-semibold text-gray-900' : ''">{{
-                    part.text
-                  }}</span>
-                }
-              </span>
-              <span class="text-[10px] text-gray-400 shrink-0 max-w-56 truncate">{{ p.hint }}</span>
-              <span class="text-sm text-gray-300 shrink-0">→</span>
-            </button>
+            <app-hit-row [hit]="p" kind="project" [active]="activeId() === p.id" (picked)="open('project', p.id)" />
           }
         }
       </div>

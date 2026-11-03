@@ -1,6 +1,6 @@
 @if (networkservice.data.isLoading()) {
   <div class="absolute inset-0 flex flex-col items-center justify-center gap-4">
-    <div class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
+    <app-spinner size="lg" />
     <p class="text-gray-400 font-light text-sm">Netzwerk wird geladen ...</p>
   </div>
 } @else {

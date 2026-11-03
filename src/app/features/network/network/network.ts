@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  Output,
-  effect,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, effect, signal } from '@angular/core';
 import {
   NetworkData,
   NetworkFilters,
@@ -24,10 +15,11 @@ import {
 import { NetworkService } from '@shared/services/network-service';
 import * as d3 from 'd3';
 import { NO_VALUE, matchesFilters } from '@shared/utils/network-filter.utils';
+import { Spinner, SPINNER_CLASS } from '@ui/spinner/spinner';
 
 @Component({
   selector: 'app-network',
-  imports: [],
+  imports: [Spinner],
   templateUrl: './network.html',
   styleUrl: './network.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -170,8 +162,7 @@ export class Network implements OnDestroy {
     const el = document.createElement('div');
     el.setAttribute('aria-busy', 'true');
     el.className = 'absolute inset-0 z-30 flex items-center justify-center bg-white/60 cursor-wait';
-    el.innerHTML =
-      '<div class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>';
+    el.innerHTML = `<div class="w-10 h-10 ${SPINNER_CLASS}"></div>`;
     host.append(el);
     this.busyEl = el;
   }
@@ -200,9 +191,7 @@ export class Network implements OnDestroy {
     this.resizeObserver = new ResizeObserver(() => {
       this.width = el.clientWidth - this.margin * 2;
       this.height = el.clientHeight - this.margin * 2;
-      this.svgRoot
-        ?.attr('width', this.width + this.margin * 2)
-        .attr('height', this.height + this.margin * 2);
+      this.svgRoot?.attr('width', this.width + this.margin * 2).attr('height', this.height + this.margin * 2);
       this.fitToView();
 
       clearTimeout(this.resizeTimer);
@@ -220,11 +209,7 @@ export class Network implements OnDestroy {
 
   private buildGraph(data: NetworkData, filters: NetworkFilters): void {
     const types = filters.organisationTypes;
-    const allowed = new Set(
-      data.nodes
-        .filter((n) => types.length === 0 || types.includes(n.type || NO_VALUE))
-        .map((n) => n._id.$oid),
-    );
+    const allowed = new Set(data.nodes.filter((n) => types.length === 0 || types.includes(n.type || NO_VALUE)).map((n) => n._id.$oid));
 
     const entries = (data.projects ?? [])
       .filter((p) => matchesFilters(p, filters))
@@ -281,12 +266,7 @@ export class Network implements OnDestroy {
       .clamp(true);
 
     const activeOrgs: NetworkNode[] = data.nodes
-      .filter(
-        (n) =>
-          allowed.has(n._id.$oid) &&
-          !folded.has(n._id.$oid) &&
-          (projectsByOrg.get(n._id.$oid)?.length ?? 0) > 0,
-      )
+      .filter((n) => allowed.has(n._id.$oid) && !folded.has(n._id.$oid) && (projectsByOrg.get(n._id.$oid)?.length ?? 0) > 0)
       .map((n) => {
         const count = projectsByOrg.get(n._id.$oid)!.length;
         return {
@@ -324,20 +304,12 @@ export class Network implements OnDestroy {
 
     const bundleRadius = d3
       .scaleSqrt()
-      .domain([
-        foldFrom,
-        Math.max(
-          d3.max(orgBundles, (b) => b.members.length) ?? foldFrom,
-          d3.max(projectBundles, (b) => b.projects.length) ?? foldFrom,
-        ),
-      ])
+      .domain([foldFrom, Math.max(d3.max(orgBundles, (b) => b.members.length) ?? foldFrom, d3.max(projectBundles, (b) => b.projects.length) ?? foldFrom)])
       .range([12, 30])
       .clamp(true);
 
     const orgBundleNodes: NetworkNode[] = orgBundles.map((b) => {
-      const leaders = new Set(
-        entries.find((e) => e.project._id === b.projectId)?.project.projectLeader ?? [],
-      );
+      const leaders = new Set(entries.find((e) => e.project._id === b.projectId)?.project.projectLeader ?? []);
       return {
         id: `b:${b.projectId}`,
         nodeType: 'bundle',
@@ -358,9 +330,7 @@ export class Network implements OnDestroy {
       bundleOf: 'project',
       name: `+${b.projects.length}`,
       bundledProjects: b.projects,
-      leadIds: b.projects
-        .filter((p) => (p.projectLeader ?? []).includes(b.orgId))
-        .map((p) => p._id),
+      leadIds: b.projects.filter((p) => (p.projectLeader ?? []).includes(b.orgId)).map((p) => p._id),
       count: b.projects.length,
       r: bundleRadius(b.projects.length),
       x: 0,
@@ -573,9 +543,7 @@ export class Network implements OnDestroy {
     }
 
     const coreIds = new Set(core.map((n) => n.id));
-    const coreLinks = this.links
-      .filter((l) => coreIds.has(l.source.id) && coreIds.has(l.target.id))
-      .map((l) => ({ source: l.source.id, target: l.target.id }));
+    const coreLinks = this.links.filter((l) => coreIds.has(l.source.id) && coreIds.has(l.target.id)).map((l) => ({ source: l.source.id, target: l.target.id }));
 
     const stretch = Math.sqrt(this.layoutAspect());
 
@@ -791,13 +759,9 @@ export class Network implements OnDestroy {
       .attr('d', (d: NetworkNode) => this.symbolPath(d))
       .attr('transform', (d: NetworkNode) => `translate(${d.x},${d.y})`)
       .attr('fill', (d: NetworkNode) => this.color(d))
-      .attr('stroke', (d: NetworkNode) =>
-        d.nodeType === 'bundle' ? (d.leadIds?.length ? this.leadColor : this.bundleStroke) : '#fff',
-      )
+      .attr('stroke', (d: NetworkNode) => (d.nodeType === 'bundle' ? (d.leadIds?.length ? this.leadColor : this.bundleStroke) : '#fff'))
       .attr('stroke-width', (d: NetworkNode) => (d.leadIds?.length ? 1.8 : 1.4))
-      .attr('stroke-dasharray', (d: NetworkNode) =>
-        d.nodeType === 'bundle' && !d.leadIds?.length ? '3 2' : null,
-      )
+      .attr('stroke-dasharray', (d: NetworkNode) => (d.nodeType === 'bundle' && !d.leadIds?.length ? '3 2' : null))
       .attr('fill-opacity', (d: NetworkNode) => (d.nodeType === 'org' && d.count === 0 ? 0.75 : 1))
       .style('cursor', 'pointer')
       .on('mouseenter', (_: MouseEvent, d: NetworkNode) => this.highlight(d))
@@ -815,9 +779,7 @@ export class Network implements OnDestroy {
       .join('g')
       .attr('class', 'label')
       .attr('transform', (d: NetworkNode) =>
-        d.nodeType === 'bundle'
-          ? `translate(${d.x},${d.y})`
-          : `translate(${d.x + d.r + (d.nodeType === 'project' ? 14 : 9)},${d.y})`,
+        d.nodeType === 'bundle' ? `translate(${d.x},${d.y})` : `translate(${d.x + d.r + (d.nodeType === 'project' ? 14 : 9)},${d.y})`,
       )
       .style('pointer-events', 'none')
       .attr('opacity', (d: NetworkNode) => (this.labelVisible(d) ? 1 : 0));
@@ -829,9 +791,7 @@ export class Network implements OnDestroy {
       .attr('rx', 3)
       .attr('fill', '#fff')
       .attr('fill-opacity', 0.92)
-      .attr('stroke', (d: NetworkNode) =>
-        d.nodeType === 'project' ? this.projectColor : organisationColor(d.type),
-      )
+      .attr('stroke', (d: NetworkNode) => (d.nodeType === 'project' ? this.projectColor : organisationColor(d.type)))
       .attr('stroke-width', 1);
 
     sel
@@ -851,25 +811,11 @@ export class Network implements OnDestroy {
   private renderBand(totalW: number, totalH: number): void {
     if (!this.fringeProjects && !this.fringeOrganisations) return;
 
-    const band = this.svgRoot
-      .append('g')
-      .attr('transform', `translate(0,${totalH - this.bandHeight})`);
+    const band = this.svgRoot.append('g').attr('transform', `translate(0,${totalH - this.bandHeight})`);
 
-    band
-      .append('rect')
-      .attr('width', totalW)
-      .attr('height', this.bandHeight)
-      .attr('fill', this.fringeFill)
-      .style('pointer-events', 'none');
+    band.append('rect').attr('width', totalW).attr('height', this.bandHeight).attr('fill', this.fringeFill).style('pointer-events', 'none');
 
-    band
-      .append('line')
-      .attr('x1', 0)
-      .attr('x2', totalW)
-      .attr('y1', 0.5)
-      .attr('y2', 0.5)
-      .attr('stroke', '#e5e7eb')
-      .style('pointer-events', 'none');
+    band.append('line').attr('x1', 0).attr('x2', totalW).attr('y1', 0.5).attr('y2', 0.5).attr('stroke', '#e5e7eb').style('pointer-events', 'none');
 
     const parts: string[] = [];
     if (this.fringeProjects) parts.push(`${this.fringeProjects} Projekte ohne Verbindung`);
@@ -904,9 +850,7 @@ export class Network implements OnDestroy {
     this.nodeSel?.style('pointer-events', (n: NetworkNode) => (this.isOpen(n) ? 'none' : 'auto'));
   }
 
-  private overlayItems(
-    bundle: NetworkNode,
-  ): { id: string; name: string; color: string; lead: boolean }[] {
+  private overlayItems(bundle: NetworkNode): { id: string; name: string; color: string; lead: boolean }[] {
     const leads = new Set(bundle.leadIds ?? []);
 
     if (bundle.bundleOf === 'project') {
@@ -946,9 +890,7 @@ export class Network implements OnDestroy {
   private syncOverlays(d: NetworkNode): void {
     this.selectedMember = null;
 
-    const attached = [...this.egoSet(d)]
-      .map((id) => this.byId.get(id)!)
-      .filter((n) => n?.nodeType === 'bundle');
+    const attached = [...this.egoSet(d)].map((id) => this.byId.get(id)!).filter((n) => n?.nodeType === 'bundle');
 
     const keep = new Set(attached.map((n) => n.id));
 
@@ -1112,27 +1054,15 @@ export class Network implements OnDestroy {
 
     const hover = g.append('g').attr('opacity', 0).style('pointer-events', 'none');
 
-    const plate = hover
-      .append('rect')
-      .attr('class', 'plate')
-      .attr('rx', 3)
-      .attr('fill', '#fff')
-      .attr('fill-opacity', 0.92)
-      .attr('stroke-width', 1);
+    const plate = hover.append('rect').attr('class', 'plate').attr('rx', 3).attr('fill', '#fff').attr('fill-opacity', 0.92).attr('stroke-width', 1);
 
-    const text = hover
-      .append('text')
-      .attr('font-size', 10)
-      .attr('fill', '#0f172a')
-      .attr('dominant-baseline', 'middle');
+    const text = hover.append('text').attr('font-size', 10).attr('fill', '#0f172a').attr('dominant-baseline', 'middle');
 
     marks.forEach(({ mark, item, cx, cy }) => {
       mark
         .on('mouseenter', () => {
           const flip = cx > w / 2;
-          text
-            .text(item.lead ? `${item.name} · Führung` : item.name)
-            .attr('text-anchor', flip ? 'end' : 'start');
+          text.text(item.lead ? `${item.name} · Führung` : item.name).attr('text-anchor', flip ? 'end' : 'start');
           hover.attr('transform', `translate(${cx + (flip ? -(dot + 6) : dot + 6)},${cy})`);
 
           const bb = (text.node() as SVGTextElement).getBBox();
@@ -1167,9 +1097,7 @@ export class Network implements OnDestroy {
       if (!org || !anchor.project) return;
 
       const partners =
-        [...(this.neighbors.get(anchor.id) ?? [])]
-          .map((nid) => this.byId.get(nid)!)
-          .reduce((sum, n) => sum + (n?.nodeType === 'bundle' ? n.count : 1), 0) - 1;
+        [...(this.neighbors.get(anchor.id) ?? [])].map((nid) => this.byId.get(nid)!).reduce((sum, n) => sum + (n?.nodeType === 'bundle' ? n.count : 1), 0) - 1;
 
       this.projectSelected.emit(null);
       this.nodeSelected.emit({
@@ -1218,9 +1146,7 @@ export class Network implements OnDestroy {
     const first = this.neighbors.get(d.id) ?? new Set<string>();
     first.forEach((id) => set.add(id));
     if (d.nodeType === 'org') {
-      first.forEach((projectId) =>
-        (this.neighbors.get(projectId) ?? new Set<string>()).forEach((id) => set.add(id)),
-      );
+      first.forEach((projectId) => (this.neighbors.get(projectId) ?? new Set<string>()).forEach((id) => set.add(id)));
     }
     return set;
   }
@@ -1228,17 +1154,13 @@ export class Network implements OnDestroy {
   private highlight(d: NetworkNode): void {
     const ego = this.egoSet(d);
     const relevant = (l: NetworkLink) =>
-      l.source.id === d.id ||
-      l.target.id === d.id ||
-      (d.nodeType === 'org' && (this.neighbors.get(d.id)?.has(l.target.id) ?? false));
+      l.source.id === d.id || l.target.id === d.id || (d.nodeType === 'org' && (this.neighbors.get(d.id)?.has(l.target.id) ?? false));
 
     const selectedId = this.selected()?.id;
 
     this.linkSel
       .attr('stroke-opacity', (l: NetworkLink) => (relevant(l) ? (l.lead ? 0.95 : 0.7) : 0.03))
-      .attr('stroke', (l: NetworkLink) =>
-        relevant(l) ? (l.lead ? this.leadColor : '#0f172a') : '#64748b',
-      );
+      .attr('stroke', (l: NetworkLink) => (relevant(l) ? (l.lead ? this.leadColor : '#0f172a') : '#64748b'));
 
     this.applyOpacity(
       (n) => (this.isOpen(n) ? 0 : ego.has(n.id) ? 1 : 0.1),
@@ -1246,14 +1168,9 @@ export class Network implements OnDestroy {
     );
   }
 
-  private applyOpacity(
-    nodeAlpha: (n: NetworkNode) => number,
-    labelShown: (n: NetworkNode) => boolean,
-  ): void {
+  private applyOpacity(nodeAlpha: (n: NetworkNode) => number, labelShown: (n: NetworkNode) => boolean): void {
     this.nodeSel.attr('opacity', nodeAlpha);
-    this.labelSel.attr('opacity', (n: NetworkNode) =>
-      n.nodeType === 'bundle' ? nodeAlpha(n) : labelShown(n) ? 1 : 0,
-    );
+    this.labelSel.attr('opacity', (n: NetworkNode) => (n.nodeType === 'bundle' ? nodeAlpha(n) : labelShown(n) ? 1 : 0));
   }
 
   private focusIds(): { ids: Set<string>; anchors: Set<string> } | null {
@@ -1290,9 +1207,7 @@ export class Network implements OnDestroy {
 
       this.linkSel
         .attr('stroke-opacity', (l: NetworkLink) => (inside(l) ? (l.lead ? 0.9 : 0.6) : 0.03))
-        .attr('stroke', (l: NetworkLink) =>
-          inside(l) ? (l.lead ? this.leadColor : '#0f172a') : '#64748b',
-        );
+        .attr('stroke', (l: NetworkLink) => (inside(l) ? (l.lead ? this.leadColor : '#0f172a') : '#64748b'));
       this.applyOpacity(
         (n) => (this.isOpen(n) ? 0 : ids.has(n.id) ? 1 : 0.12),
         (n) => anchors.has(n.id) || (ids.has(n.id) && this.labelVisible(n)),
@@ -1300,9 +1215,7 @@ export class Network implements OnDestroy {
       return;
     }
 
-    this.linkSel
-      .attr('stroke-opacity', (l: NetworkLink) => this.linkOpacity(l))
-      .attr('stroke', (l: NetworkLink) => this.linkColor(l));
+    this.linkSel.attr('stroke-opacity', (l: NetworkLink) => this.linkOpacity(l)).attr('stroke', (l: NetworkLink) => this.linkColor(l));
     this.applyOpacity(
       (n) => (this.isOpen(n) ? 0 : 1),
       (n) => this.labelVisible(n),
@@ -1345,9 +1258,7 @@ export class Network implements OnDestroy {
       this.nodeSelected.emit(null);
       const orgs = [...(this.neighbors.get(d.id) ?? [])]
         .map((id) => this.byId.get(id)!)
-        .flatMap((n) =>
-          n?.nodeType === 'bundle' ? (n.members ?? []) : n?.organisation ? [n.organisation] : [],
-        )
+        .flatMap((n) => (n?.nodeType === 'bundle' ? (n.members ?? []) : n?.organisation ? [n.organisation] : []))
         .sort((a, b) => a.name.localeCompare(b.name));
       this.projectSelected.emit({ project: d.project!, organisations: orgs });
     }
@@ -1367,10 +1278,7 @@ export class Network implements OnDestroy {
 
     const raw = id.startsWith('p:') ? id.slice(2) : id;
     const bundle = this.nodes.find(
-      (n) =>
-        n.nodeType === 'bundle' &&
-        ((n.members ?? []).some((o) => o._id.$oid === raw) ||
-          (n.bundledProjects ?? []).some((p) => p._id === raw)),
+      (n) => n.nodeType === 'bundle' && ((n.members ?? []).some((o) => o._id.$oid === raw) || (n.bundledProjects ?? []).some((p) => p._id === raw)),
     );
     if (!bundle) return;
 
@@ -1389,10 +1297,7 @@ export class Network implements OnDestroy {
     this.svgRoot
       .transition()
       .duration(350)
-      .call(
-        this.zoomBehavior.transform,
-        d3.zoomIdentity.translate(fw / 2 - k * n.x, fh / 2 - k * n.y).scale(k),
-      );
+      .call(this.zoomBehavior.transform, d3.zoomIdentity.translate(fw / 2 - k * n.x, fh / 2 - k * n.y).scale(k));
   }
 
   private clearSelection(): void {
@@ -1419,11 +1324,6 @@ export class Network implements OnDestroy {
       fh = Math.max(this.height + this.margin * 2 - this.bandHeight, 80);
     const scale = Math.min(fw / bw, fh / bh, 2.5);
 
-    this.svgRoot.call(
-      this.zoomBehavior.transform,
-      d3.zoomIdentity
-        .translate(fw / 2 - scale * (minX + bw / 2), fh / 2 - scale * (minY + bh / 2))
-        .scale(scale),
-    );
+    this.svgRoot.call(this.zoomBehavior.transform, d3.zoomIdentity.translate(fw / 2 - scale * (minX + bw / 2), fh / 2 - scale * (minY + bh / 2)).scale(scale));
   }
 }

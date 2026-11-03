@@ -1,31 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { useOrigin } from '@shared/navigation/origin';
 import { ProjectService } from '@shared/services/project-service';
-import {
-  ParticipantRow,
-  RecurringProjectRow,
-  TechnologyField,
-  TechnologyRef,
-} from '@shared/models/project.model';
-import {
-  organisationColor,
-  organisationTypeName,
-  PROJECT_COLOR,
-  projectStatusName,
-} from '@shared/models/network.model';
-import {
-  cityOnly,
-  cleanKeywords,
-  isRunning,
-  oid,
-  toDate,
-  toParagraphs,
-} from '@shared/utils/details.utils';
+import { ParticipantRow, RecurringProjectRow, TechnologyField, TechnologyRef } from '@shared/models/project.model';
+import { organisationColor, organisationTypeName, PROJECT_COLOR, projectStatusName } from '@shared/models/network.model';
+import { cityOnly, cleanKeywords, isRunning, oid, toDate, toParagraphs } from '@shared/utils/details.utils';
+import { Spinner } from '../../ui/spinner/spinner';
+import { Section } from '../../ui/section/section';
+import { Field } from '../../ui/field/field';
+import { StatCard } from '../../ui/stat-card/stat-card';
 
 @Component({
   selector: 'app-project',
-  imports: [],
+  imports: [Spinner, Section, Field, StatCard],
   templateUrl: './project.html',
   styleUrl: './project.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,19 +23,13 @@ export class Project {
   private readonly router = inject(Router);
   protected readonly service = inject(ProjectService);
 
-  private readonly origin = signal<{ url: string | null; label: string | null }>({
-    url: null,
-    label: null,
-  });
+  /** Rückweg und Weitergabe — siehe `shared/origin.ts`. */
+  protected readonly nav = useOrigin({ title: () => this.label() });
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.service.selectedId.set(params.get('id') ?? '');
       this.abstractOpen.set(false);
-    });
-
-    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.origin.set({ url: params.get('from'), label: params.get('fromLabel') });
     });
   }
 
@@ -93,11 +75,7 @@ export class Project {
       });
   });
 
-  readonly withoutType = computed(
-    () => this.participants().filter((participant) => !participant.type).length,
-  );
-
-  readonly backLabel = computed(() => this.origin().label ?? 'Zurück zur Übersicht');
+  readonly withoutType = computed(() => this.participants().filter((participant) => !participant.type).length);
 
   toggleAbstract(): void {
     this.abstractOpen.update((open) => !open);
@@ -111,23 +89,14 @@ export class Project {
     return type ? organisationTypeName(type) : '';
   }
 
-  goBack(): void {
-    const url = this.origin().url;
-    if (url) {
-      this.router.navigateByUrl(url);
-      return;
-    }
-    this.router.navigate(['/key-technologies']);
-  }
-
   openOrganisation(participant: ParticipantRow): void {
     this.router.navigate(['/organisation', oid(participant._id)], {
-      queryParams: this.handover(),
+      queryParams: this.nav.handover(),
     });
   }
 
   openProject(row: RecurringProjectRow): void {
-    this.router.navigate(['/project', row._id], { queryParams: this.handover() });
+    this.router.navigate(['/project', row._id], { queryParams: this.nav.handover() });
   }
 
   openField(group: TechnologyField): void {
@@ -140,11 +109,7 @@ export class Project {
   openTechnology(technology: TechnologyRef): void {
     const id = technology.short || technology.label;
     if (!id) return;
-    this.router.navigate(['/key-technologies', id], { queryParams: this.handover() });
-  }
-
-  private handover() {
-    return { from: this.router.url, fromLabel: `Zurück zu ${this.label()}` };
+    this.router.navigate(['/key-technologies', id], { queryParams: this.nav.handover() });
   }
 
   label(): string {

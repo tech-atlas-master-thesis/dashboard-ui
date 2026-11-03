@@ -1,11 +1,6 @@
 <div class="relative">
-  @if (openFacet()) {
-    <button
-      type="button"
-      (click)="closeAll()"
-      tabindex="-1"
-      class="fixed inset-0 z-0 cursor-default"
-    ></button>
+  @if (openFilter()) {
+    <button type="button" (click)="closeAll()" tabindex="-1" class="fixed inset-0 z-0 cursor-default"></button>
   }
 
   <div class="relative flex flex-row z-10 items-center gap-2">
@@ -17,602 +12,93 @@
       class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
     >
       Suchen
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        class="text-gray-400"
-      >
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-      </svg>
+      <app-icon name="search" class="text-gray-400" />
     </button>
 
-    <div class="relative">
-      @if (isSet('date')) {
-        <div
-          class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
-        >
-          <button
-            type="button"
-            (click)="toggleFacet('date')"
-            class="flex items-center gap-2 cursor-pointer"
-          >
-            <span class="text-gray-200">Zeitraum</span>
-            <span class="tabular-nums">{{ facetSummary('date') }}</span>
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              class="text-gray-300"
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </button>
-          <span class="w-px h-4 bg-gray-400"></span>
-          <button
-            type="button"
-            (click)="clear('date')"
-            class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
-          >
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-      } @else {
-        <button
-          type="button"
-          (click)="toggleFacet('date')"
-          class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
-        >
-          Zeitraum
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            class="text-gray-400"
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
-        </button>
-      }
-
-      @if (openFacet() === 'date') {
-        <div
-          class="absolute right-0 top-8 z-20 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-2"
-        >
-          <p class="text-xs text-gray-500">Projektstart</p>
-          <div class="flex items-center gap-2">
-            <input
-              type="date"
-              [value]="current().dateFrom ?? ''"
-              (change)="setDateFrom($any($event.target).value)"
-              class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
-            />
-            <span class="text-xs text-gray-300">–</span>
-            <input
-              type="date"
-              [value]="current().dateTo ?? ''"
-              (change)="setDateTo($any($event.target).value)"
-              class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
-            />
-          </div>
-        </div>
-      }
-    </div>
-
-    @if (statuses().length) {
+    @for (key of visibleFilters(); track key) {
       <div class="relative">
-        @if (isSet('statuses')) {
-          <div
-            class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
-          >
-            <button
-              type="button"
-              (click)="toggleFacet('statuses')"
-              class="flex items-center gap-2 cursor-pointer"
-            >
-              <span class="text-gray-200 shrink-0">Status</span>
-              <span class="truncate">{{ facetSummary('statuses') }}</span>
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                class="text-gray-300 shrink-0"
-              >
-                <polyline points="6,9 12,15 18,9"></polyline>
-              </svg>
-            </button>
-            <span class="w-px h-4 bg-gray-400"></span>
-            <button
-              type="button"
-              (click)="clear('statuses')"
-              class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              >
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        } @else {
-          <button
-            type="button"
-            (click)="toggleFacet('statuses')"
-            class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
-          >
-            Status
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              class="text-gray-400"
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </button>
-        }
+        <app-filter-chip
+          [meta]="meta(key)"
+          [set]="isSet(key)"
+          [summary]="filterSummary(key)"
+          [typeColors]="key === 'organisationTypes' ? chosenTypeColors() : []"
+          (toggled)="toggleFilter(key)"
+          (cleared)="clear(key)"
+        />
 
-        @if (openFacet() === 'statuses') {
-          <div
-            class="absolute right-0 top-8 z-20 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-1"
+        @if (openFilter() === key) {
+          <app-popover
+            [title]="meta(key).popoverTitle ?? meta(key).fullLabel ?? meta(key).label"
+            [width]="meta(key).width"
+            [resetLabel]="meta(key).resetLabel ?? ''"
+            [scroll]="meta(key).scroll === true"
+            (resetRequested)="clear(key)"
           >
-            <div class="flex items-baseline justify-between pb-1">
-              <p class="text-xs text-gray-500">Status</p>
-              <button
-                type="button"
-                (click)="clearFacet('statuses')"
-                class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
-              >
-                alle
-              </button>
-            </div>
+            @switch (key) {
+              @case ('date') {
+                <div class="flex items-center gap-2">
+                  <input
+                    type="date"
+                    [value]="current().dateFrom ?? ''"
+                    (change)="setDateFrom($any($event.target).value)"
+                    class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
+                  />
+                  <span class="text-xs text-gray-300">–</span>
+                  <input
+                    type="date"
+                    [value]="current().dateTo ?? ''"
+                    (change)="setDateTo($any($event.target).value)"
+                    class="text-xs border border-gray-200 rounded-lg px-2 py-1 w-full"
+                  />
+                </div>
+              }
 
-            @for (s of statuses(); track s.key) {
-              <div class="flex items-center gap-2 h-7">
-                <input
-                  type="checkbox"
-                  [id]="'status-' + s.key"
-                  [checked]="isActive(current().statuses, s.key)"
-                  (change)="toggleStatus(s.key)"
-                  class="rounded cursor-pointer"
-                />
-                <label [for]="'status-' + s.key" class="flex-1 text-xs cursor-pointer truncate">{{
-                  s.label
-                }}</label>
-                <button
-                  type="button"
-                  (click)="only('statuses', s.key)"
-                  class="text-[10px] text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                >
-                  nur
-                </button>
-                <span class="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                  <span
-                    class="block h-1.5 rounded-full bg-gray-400"
-                    [style.width]="statusWidth(s.count)"
-                  ></span>
-                </span>
-                <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
-                  int(s.count)
-                }}</span>
-              </div>
+              @case ('bundling') {
+                <div class="flex items-center gap-2 h-7">
+                  <input type="checkbox" id="bundling-on" [checked]="bundling()" (change)="toggleBundling()" class="rounded cursor-pointer" />
+                  <label for="bundling-on" class="flex-1 text-xs cursor-pointer">Einzelbeteiligte zusammenfassen</label>
+                </div>
+
+                <div class="flex items-center gap-2 h-7" [class.opacity-40]="!bundling()">
+                  <label for="bundling-from" class="flex-1 text-xs">ab</label>
+                  <input
+                    type="range"
+                    id="bundling-from"
+                    min="2"
+                    max="12"
+                    step="1"
+                    [value]="bundleFrom()"
+                    [disabled]="!bundling()"
+                    (input)="setBundleFrom($any($event.target).value)"
+                    class="w-36 accent-gray-500 cursor-pointer"
+                  />
+                  <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{ int(bundleFrom()) }}</span>
+                </div>
+
+                <p class="text-[11px] text-gray-400 leading-snug">
+                  Organisationen, die nur an einem Projekt hängen, und Projekte, die nur an einer Organisation hängen, werden ab dieser Anzahl zu einem Knoten
+                  zusammengefasst. Vorgabe {{ int(defaultBundleFrom) }}.
+                </p>
+              }
+
+              @default {
+                <div class="flex flex-col gap-1">
+                  @for (option of options(key); track option.key) {
+                    <app-filter-option
+                      [option]="option"
+                      [inputId]="key + '-' + option.key"
+                      [checked]="isActive(key, option.key)"
+                      (toggled)="toggleOption(key, option.key)"
+                      (onlyRequested)="only(key, option.key)"
+                    />
+                  }
+                </div>
+              }
             }
-          </div>
+          </app-popover>
         }
       </div>
     }
-
-    @if (organisationTypes().length) {
-      <div class="relative">
-        @if (isSet('organisationTypes')) {
-          <div
-            class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
-          >
-            <button
-              type="button"
-              (click)="toggleFacet('organisationTypes')"
-              class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0"
-            >
-              <span class="text-gray-200 shrink-0">Typ</span>
-              <span class="flex items-center shrink-0">
-                @for (color of chosenTypeColors(); track $index) {
-                  <span
-                    class="w-2.5 h-2.5 rounded-full ring-2 ring-gray-500 -ml-1 first:ml-0"
-                    [style.background]="color"
-                  ></span>
-                }
-              </span>
-              <span class="truncate">{{ facetSummary('organisationTypes') }}</span>
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                class="text-gray-300 shrink-0"
-              >
-                <polyline points="6,9 12,15 18,9"></polyline>
-              </svg>
-            </button>
-            <span class="w-px h-4 bg-gray-400"></span>
-            <button
-              type="button"
-              (click)="clear('organisationTypes')"
-              class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              >
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        } @else {
-          <button
-            type="button"
-            (click)="toggleFacet('organisationTypes')"
-            class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
-          >
-            Organisationstyp
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              class="text-gray-400"
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </button>
-        }
-
-        @if (openFacet() === 'organisationTypes') {
-          <div
-            class="absolute right-0 top-8 z-20 w-80 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-1"
-          >
-            <div class="flex items-baseline justify-between pb-1">
-              <p class="text-xs text-gray-500">Organisationstyp</p>
-              <button
-                type="button"
-                (click)="clearFacet('organisationTypes')"
-                class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
-              >
-                alle
-              </button>
-            </div>
-
-            @for (t of organisationTypes(); track t.key) {
-              <div class="flex items-center gap-2 h-7">
-                <input
-                  type="checkbox"
-                  [id]="'type-' + t.key"
-                  [checked]="isActive(current().organisationTypes, t.key)"
-                  (change)="toggleType(t.key)"
-                  class="rounded cursor-pointer"
-                />
-                <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="t.color"></span>
-                <label
-                  [for]="'type-' + t.key"
-                  class="flex-1 min-w-0 text-xs cursor-pointer truncate"
-                  >{{ t.label }}</label
-                >
-                <button
-                  type="button"
-                  (click)="only('organisationTypes', t.key)"
-                  class="text-[10px] text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                >
-                  nur
-                </button>
-                <span class="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                  <span
-                    class="block h-1.5 rounded-full"
-                    [style.width]="typeWidth(t.count)"
-                    [style.background]="t.color"
-                  ></span>
-                </span>
-                <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
-                  int(t.count)
-                }}</span>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-
-    @if (programmes().length) {
-      <div class="relative">
-        @if (isSet('programmes')) {
-          <div
-            class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
-          >
-            <button
-              type="button"
-              (click)="toggleFacet('programmes')"
-              class="flex items-center gap-2 cursor-pointer max-w-56 min-w-0"
-            >
-              <span class="text-gray-200 shrink-0">Linie</span>
-              <span class="truncate">{{ facetSummary('programmes') }}</span>
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                class="text-gray-300 shrink-0"
-              >
-                <polyline points="6,9 12,15 18,9"></polyline>
-              </svg>
-            </button>
-            <span class="w-px h-4 bg-gray-400"></span>
-            <button
-              type="button"
-              (click)="clear('programmes')"
-              class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              >
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        } @else {
-          <button
-            type="button"
-            (click)="toggleFacet('programmes')"
-            class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
-          >
-            Programmlinie
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              class="text-gray-400"
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </button>
-        }
-
-        @if (openFacet() === 'programmes') {
-          <div
-            class="absolute right-0 top-8 z-20 w-96 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-1 max-h-96 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            <div class="flex items-baseline justify-between pb-1">
-              <p class="text-xs text-gray-500">Programmlinie</p>
-              <button
-                type="button"
-                (click)="clearFacet('programmes')"
-                class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
-              >
-                alle
-              </button>
-            </div>
-
-            @for (p of programmes(); track p.id) {
-              <div class="flex items-center gap-2 h-7">
-                <input
-                  type="checkbox"
-                  [id]="'programme-' + p.id"
-                  [checked]="isActive(current().programmes, p.id)"
-                  (change)="toggleProgramme(p.id)"
-                  class="rounded cursor-pointer"
-                />
-                <label
-                  [for]="'programme-' + p.id"
-                  class="flex-1 min-w-0 text-xs cursor-pointer truncate"
-                  [title]="p.name"
-                  >{{ p.name }}</label
-                >
-                <button
-                  type="button"
-                  (click)="only('programmes', p.id)"
-                  class="text-[10px] text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                >
-                  nur
-                </button>
-                <span class="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                  <span
-                    class="block h-1.5 rounded-full bg-gray-400"
-                    [style.width]="programmeWidth(p.count)"
-                  ></span>
-                </span>
-                <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
-                  int(p.count)
-                }}</span>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-
-    <div class="relative">
-      @if (isSet('bundling')) {
-        <div
-          class="h-6 pl-3 pr-1 rounded-2xl bg-gray-500 text-white text-xs flex items-center gap-1.5"
-        >
-          <button
-            type="button"
-            (click)="toggleFacet('bundling')"
-            class="flex items-center gap-2 cursor-pointer"
-          >
-            <span class="text-gray-200">Bündelung</span>
-            <span class="tabular-nums">{{ facetSummary('bundling') }}</span>
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              class="text-gray-300"
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </button>
-          <span class="w-px h-4 bg-gray-400"></span>
-          <button
-            type="button"
-            (click)="clear('bundling')"
-            class="px-1.5 text-gray-200 hover:text-white cursor-pointer flex items-center"
-          >
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-      } @else {
-        <button
-          type="button"
-          (click)="toggleFacet('bundling')"
-          class="h-6 px-3 rounded-2xl border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 hover:text-gray-900 cursor-pointer flex items-center gap-2"
-        >
-          Bündelung
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            class="text-gray-400"
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
-        </button>
-      }
-
-      @if (openFacet() === 'bundling') {
-        <div
-          class="absolute right-0 top-8 z-20 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 flex flex-col gap-2"
-        >
-          <div class="flex items-baseline justify-between">
-            <p class="text-xs text-gray-500">Bündelung</p>
-            <button
-              type="button"
-              (click)="resetBundling()"
-              class="text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer"
-            >
-              Standard
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2 h-7">
-            <input
-              type="checkbox"
-              id="bundling-on"
-              [checked]="bundling()"
-              (change)="toggleBundling()"
-              class="rounded cursor-pointer"
-            />
-            <label for="bundling-on" class="flex-1 text-xs cursor-pointer"
-              >Einzelbeteiligte zusammenfassen</label
-            >
-          </div>
-
-          <div class="flex items-center gap-2 h-7" [class.opacity-40]="!bundling()">
-            <label for="bundling-from" class="flex-1 text-xs">ab</label>
-            <input
-              type="range"
-              id="bundling-from"
-              min="2"
-              max="12"
-              step="1"
-              [value]="bundleFrom()"
-              [disabled]="!bundling()"
-              (input)="setBundleFrom($any($event.target).value)"
-              class="w-36 accent-gray-500 cursor-pointer"
-            />
-            <span class="w-8 text-right text-xs text-gray-500 tabular-nums">{{
-              int(bundleFrom())
-            }}</span>
-          </div>
-
-          <p class="text-[11px] text-gray-400 leading-snug">
-            Organisationen, die nur an einem Projekt hängen, und Projekte, die nur an einer
-            Organisation hängen, werden ab dieser Anzahl zu einem Knoten zusammengefasst. Vorgabe
-            {{ int(defaultBundleFrom) }}.
-          </p>
-        </div>
-      }
-    </div>
 
     <span class="w-px h-4 bg-gray-200 mx-0.5"></span>
 
@@ -630,18 +116,7 @@
       title="Alle Filter zurücksetzen"
       class="w-6 h-6 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
     >
-      <svg
-        width="13"
-        height="13"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-      >
-        <path d="M20 11a8 8 0 1 0-2.3 6"></path>
-        <polyline points="20,4 20,11 13,11"></polyline>
-      </svg>
+      <app-icon name="reset" [size]="13" [weight]="2" />
     </button>
   </div>
 
@@ -655,23 +130,9 @@
         class="absolute inset-0 bg-gray-900/20 backdrop-blur-[2px] cursor-default"
       ></button>
 
-      <div
-        class="absolute left-1/2 top-[16%] -translate-x-1/2 w-xl max-w-[92vw] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden"
-      >
+      <div class="absolute left-1/2 top-[16%] -translate-x-1/2 w-xl max-w-[92vw] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
         <div class="flex items-center gap-3 h-12 px-4">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            class="text-gray-400 shrink-0"
-          >
-            <circle cx="11" cy="11" r="7"></circle>
-            <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-          </svg>
+          <app-icon name="search" [size]="16" class="text-gray-400" />
           <input
             id="network-search"
             type="text"
@@ -688,25 +149,13 @@
             [title]="search() ? 'Suche leeren' : 'Schließen'"
             class="w-6 h-6 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 cursor-pointer flex items-center justify-center shrink-0"
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-            </svg>
+            <app-icon name="close" [size]="12" />
           </button>
         </div>
 
         @if (!searching()) {
           <p class="border-t border-gray-100 px-4 py-3 text-xs text-gray-400">
-            Sucht über die Organisationen und Projekte, die gerade im Netz stehen. Ein Treffer wird
-            ausgewählt, als hätte man den Knoten angeklickt.
+            Sucht über die Organisationen und Projekte, die gerade im Netz stehen. Ein Treffer wird ausgewählt, als hätte man den Knoten angeklickt.
           </p>
         } @else {
           <div
@@ -722,26 +171,7 @@
                 <span class="tabular-nums">{{ int(searchResults().organisations.length) }}</span>
               </p>
               @for (o of searchResults().organisations; track o.id) {
-                <button
-                  type="button"
-                  [id]="'result-' + o.id"
-                  (click)="pick(o.id)"
-                  [class.bg-gray-100]="activeId() === o.id"
-                  class="flex items-center gap-2.5 h-9 px-2 text-left cursor-pointer rounded-xl hover:bg-gray-50"
-                >
-                  <span
-                    class="w-2.5 h-2.5 rounded-full shrink-0"
-                    [style.background]="o.color"
-                  ></span>
-                  <span class="flex-1 min-w-0 text-xs truncate text-gray-600" [title]="o.label">
-                    @for (part of o.parts; track $index) {
-                      <span [class]="part.hit ? 'font-semibold text-gray-900' : ''">{{
-                        part.text
-                      }}</span>
-                    }
-                  </span>
-                  <span class="text-[10px] text-gray-400 shrink-0">{{ o.hint }}</span>
-                </button>
+                <app-hit-row [hit]="o" kind="organisation" variant="popup" [active]="activeId() === o.id" (picked)="pick(o.id)" />
               }
             }
 
@@ -751,33 +181,13 @@
                 <span class="tabular-nums">{{ int(searchResults().projects.length) }}</span>
               </p>
               @for (p of searchResults().projects; track p.id) {
-                <button
-                  type="button"
-                  [id]="'result-' + p.id"
-                  (click)="pick(p.id)"
-                  [class.bg-gray-100]="activeId() === p.id"
-                  class="flex items-center gap-2.5 h-9 px-2 text-left cursor-pointer rounded-xl hover:bg-gray-50"
-                >
-                  <span class="w-2.5 h-2.5 rounded-xs shrink-0 bg-slate-600"></span>
-                  <span class="flex-1 min-w-0 text-xs truncate text-gray-600" [title]="p.label">
-                    @for (part of p.parts; track $index) {
-                      <span [class]="part.hit ? 'font-semibold text-gray-900' : ''">{{
-                        part.text
-                      }}</span>
-                    }
-                  </span>
-                  <span class="text-[10px] text-gray-400 shrink-0 max-w-44 truncate">{{
-                    p.hint
-                  }}</span>
-                </button>
+                <app-hit-row [hit]="p" kind="project" variant="popup" [active]="activeId() === p.id" (picked)="pick(p.id)" />
               }
             }
           </div>
         }
 
-        <div
-          class="border-t border-gray-100 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-400"
-        >
+        <div class="border-t border-gray-100 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-400">
           <span><span class="text-gray-500">↑↓</span> wählen</span>
           <span><span class="text-gray-500">↵</span> öffnen</span>
           <span><span class="text-gray-500">esc</span> schließen</span>

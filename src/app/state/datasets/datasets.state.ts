@@ -14,17 +14,11 @@ export class DatasetsState {
     defaultValue: [],
   });
 
-  selectedPipeline = linkedSignal<string>(
-    () => this.getDefaultPipeline(this.pipelines.value()) ?? '',
-  );
+  selectedPipeline = linkedSignal<string>(() => this.getDefaultPipeline(this.pipelines.value()) ?? '');
 
-  datasets = httpResource<DataSetModel[]>(
-    () =>
-      this.selectedPipeline() === ''
-        ? undefined
-        : this.datasetsApi.getDataSetsUrl(this.selectedPipeline()),
-    { defaultValue: [] },
-  );
+  datasets = httpResource<DataSetModel[]>(() => (this.selectedPipeline() === '' ? undefined : this.datasetsApi.getDataSetsUrl(this.selectedPipeline())), {
+    defaultValue: [],
+  });
 
   selectedDataset = linkedSignal<string>(() => this.datasets.value().at(0)?._id ?? '');
 

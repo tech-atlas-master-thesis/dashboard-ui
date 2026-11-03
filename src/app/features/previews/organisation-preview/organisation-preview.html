@@ -1,0 +1,29 @@
+<app-preview-card
+  [title]="organisation().name"
+  [accent]="typeColor()"
+  actionLabel="Alle Daten zur Organisation"
+  (closed)="closed.emit()"
+  (actionRequested)="openDetails()"
+>
+  <div class="flex items-center gap-2">
+    <span class="w-2.5 h-2.5 rounded-full" [style.background]="typeColor()"></span>
+    <p class="text-xs text-gray-500">{{ typeName() }}</p>
+  </div>
+
+  @if (projectCount() !== null || cooperationCount() !== null) {
+    <div class="flex items-start gap-6 border-t border-gray-300 pt-2">
+      @if (projectCount() !== null) {
+        <div class="flex flex-col">
+          <p class="text-lg font-light">{{ projectCount() }}</p>
+          <p class="text-xs text-gray-500">{{ projectCount() === 1 ? 'Projekt' : 'Projekte' }}</p>
+        </div>
+      }
+      @if (cooperationCount() !== null) {
+        <div class="flex flex-col">
+          <p class="text-lg font-light">{{ cooperationCount() }}</p>
+          <p class="text-xs text-gray-500">Partner</p>
+        </div>
+      }
+    </div>
+  }
+</app-preview-card>

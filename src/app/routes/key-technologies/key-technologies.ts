@@ -1,33 +1,19 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  OnDestroy,
-  signal,
-  untracked,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, OnDestroy, signal, untracked } from '@angular/core';
 import * as d3 from 'd3';
 import { KeyTechnologyService } from '@shared/services/key-technologies-service';
 import { NetworkService } from '@shared/services/network-service';
-import {
-  TechnologyField,
-  KeyTechnology,
-  TechnologyViewModel,
-} from '@shared/models/key-technologies.model';
-import {
-  NetworkFilters,
-  OrganisationSelection,
-  ProjectSelection,
-  emptyFilters,
-} from '@shared/models/network.model';
+import { TechnologyField, KeyTechnology, TechnologyViewModel } from '@shared/models/key-technologies.model';
+import { NetworkFilters, OrganisationSelection, ProjectSelection, emptyFilters } from '@shared/models/network.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Network } from '../../features/network/network/network';
 import { NetworkFilter } from '../../features/network/network-filter/network-filter';
-import { OrganisationDetail } from '../../features/details/organisation-detail/organisation-detail';
-import { ProjectDetail } from '../../features/details/project-detail/project-detail';
+import { OrganisationPreview } from '../../features/previews/organisation-preview/organisation-preview';
+import { ProjectPreview } from '../../features/previews/project-preview/project-preview';
 import { Metrics } from '../../features/metrics/metrics';
 import { Search } from '../../features/search/search/search';
+import { Spinner } from '../../ui/spinner/spinner';
+import { Toggle, ToggleOption } from '../../ui/toggle/toggle';
+import { handoverTo } from '@shared/navigation/origin';
 
 type D3Node = d3.HierarchyRectangularNode<TechnologyViewModel>;
 type Mode = 'technologies' | 'network';
@@ -35,12 +21,23 @@ type FieldMode = 'tiles' | 'metrics' | 'search';
 
 @Component({
   selector: 'app-key-technologies',
-  imports: [Network, NetworkFilter, OrganisationDetail, ProjectDetail, Metrics, Search],
+  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Metrics, Search, Spinner, Toggle],
   templateUrl: './key-technologies.html',
   styleUrls: ['./key-technologies.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KeyTechnologies implements OnDestroy {
+  readonly modes: readonly ToggleOption<Mode>[] = [
+    { value: 'technologies', label: 'Technologien' },
+    { value: 'network', label: 'Netzwerk' },
+  ];
+
+  readonly fieldModes: readonly ToggleOption<FieldMode>[] = [
+    { value: 'tiles', label: 'Verteilung' },
+    { value: 'metrics', label: 'Kennzahlen' },
+    { value: 'search', label: 'Suche' },
+  ];
+
   selectedField = signal<TechnologyField | null>(null);
   mode = signal<Mode>('technologies');
   showNetwork = computed(() => this.mode() === 'network' && !!this.selectedField());
@@ -182,13 +179,13 @@ export class KeyTechnologies implements OnDestroy {
 
   openOrganisation(id: string): void {
     this.router.navigate(['/organisation', id], {
-      queryParams: { from: this.router.url, fromLabel: 'Zurück zum Netzwerk' },
+      queryParams: handoverTo(this.router, 'Zurück zum Netzwerk'),
     });
   }
 
   openProject(id: string): void {
     this.router.navigate(['/project', id], {
-      queryParams: { from: this.router.url, fromLabel: 'Zurück zum Netzwerk' },
+      queryParams: handoverTo(this.router, 'Zurück zum Netzwerk'),
     });
   }
 
@@ -239,29 +236,14 @@ export class KeyTechnologies implements OnDestroy {
     this.svg = d3.select(el).append('svg').attr('width', this.width).attr('height', this.height);
 
     const defs = this.svg.append('defs');
-    const filter = defs
-      .append('filter')
-      .attr('id', 'cell-shadow')
-      .attr('x', '-20%')
-      .attr('y', '-20%')
-      .attr('width', '140%')
-      .attr('height', '140%');
+    const filter = defs.append('filter').attr('id', 'cell-shadow').attr('x', '-20%').attr('y', '-20%').attr('width', '140%').attr('height', '140%');
 
-    filter
-      .append('feDropShadow')
-      .attr('dx', '0')
-      .attr('dy', '4')
-      .attr('stdDeviation', '8')
-      .attr('flood-color', 'rgba(0,0,0,0.35)');
+    filter.append('feDropShadow').attr('dx', '0').attr('dy', '4').attr('stdDeviation', '8').attr('flood-color', 'rgba(0,0,0,0.35)');
 
     this.g = this.svg.append('g');
   }
 
-  private wrapText(
-    selection: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown>,
-    maxWidth: (d: D3Node) => number,
-    lineHeight: number,
-  ): void {
+  private wrapText(selection: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown>, maxWidth: (d: D3Node) => number, lineHeight: number): void {
     selection.each(function (d) {
       const text = d3.select(this);
       const words = (text.text() || '').split(/\s+/).reverse();
@@ -328,13 +310,7 @@ export class KeyTechnologies implements OnDestroy {
       .style('font-weight', '600')
       .style('pointer-events', 'none')
       .text((d) => d.data.label)
-      .call((sel) =>
-        this.wrapText(
-          sel as d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown>,
-          (d) => d.x1 - d.x0 - 16,
-          20,
-        ),
-      );
+      .call((sel) => this.wrapText(sel as d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown>, (d) => d.x1 - d.x0 - 16, 20));
 
     nodes
       .append('text')
@@ -347,12 +323,7 @@ export class KeyTechnologies implements OnDestroy {
   }
 
   private layout(root: d3.HierarchyNode<TechnologyViewModel>): void {
-    d3
-      .treemap<TechnologyViewModel>()
-      .size([this.width, this.height])
-      .paddingInner(8)
-      .paddingOuter(12)
-      .tile(d3.treemapSquarify.ratio(1))(root as any);
+    d3.treemap<TechnologyViewModel>().size([this.width, this.height]).paddingInner(8).paddingOuter(12).tile(d3.treemapSquarify.ratio(1))(root as any);
   }
 
   private buildFieldHierachy(fields: TechnologyField[]): TechnologyViewModel {

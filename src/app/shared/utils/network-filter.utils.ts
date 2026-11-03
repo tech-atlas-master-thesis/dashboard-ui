@@ -1,6 +1,6 @@
 import { NetworkFilters, Project } from '../models/network.model';
 
-export type Facet = 'programmes' | 'statuses' | 'dates';
+export type ProjectFilterKey = 'programmes' | 'statuses' | 'dates';
 
 export const NO_VALUE = '__none__';
 
@@ -27,7 +27,7 @@ export function toTime(value: any): number | null {
   return null;
 }
 
-export function matchesFilters(p: Project, f: NetworkFilters, except?: Facet): boolean {
+export function matchesFilters(p: Project, f: NetworkFilters, except?: ProjectFilterKey): boolean {
   if (except !== 'programmes' && f.programmes.length) {
     const id = p.programme?._id ?? NO_VALUE;
     if (!f.programmes.includes(id)) return false;

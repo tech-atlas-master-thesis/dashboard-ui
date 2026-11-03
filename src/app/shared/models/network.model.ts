@@ -75,8 +75,7 @@ export const ORGANISATION_TYPE_COLORS: Record<string, string> = {
   LOBBY: '#94a3b8',
 };
 
-export const organisationColor = (type: string | null | undefined): string =>
-  ORGANISATION_TYPE_COLORS[type ?? ''] ?? '#94a3b8';
+export const organisationColor = (type: string | null | undefined): string => ORGANISATION_TYPE_COLORS[type ?? ''] ?? '#94a3b8';
 
 export const PROJECT_COLOR = '#475569';
 

@@ -1,26 +1,16 @@
 <div class="h-full w-full p-3 flex flex-col gap-2">
   @if (keyTechnologyService.data.isLoading()) {
     <div class="flex-1 flex flex-col items-center justify-center gap-4">
-      <div
-        class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"
-      ></div>
+      <app-spinner size="lg" />
       <p class="text-gray-400 font-light text-sm">Wird geladen ...</p>
     </div>
   } @else {
     <div class="flex items-center justify-between gap-4 shrink-0 h-8 px-3">
       <div class="flex items-center gap-4">
         @if (selectedField()) {
-          <button
-            (click)="backToFields()"
-            class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
-          >
-            ← Zurück
-          </button>
+          <button (click)="backToFields()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">← Zurück</button>
           <div class="w-px h-5 bg-gray-300"></div>
-          <p
-            class="text-xs font-medium px-2 py-1 rounded-2xl text-white"
-            [style.background]="selectedField()!.style.color"
-          >
+          <p class="text-xs font-medium px-2 py-1 rounded-2xl text-white" [style.background]="selectedField()!.style.color">
             {{ selectedField()!.label }}
           </p>
         }
@@ -38,66 +28,9 @@
         }
 
         @if (selectedField()) {
-          <div class="flex items-center gap-1 bg-gray-100 rounded-2xl p-0.5 shrink-0">
-            <button
-              (click)="setMode('technologies')"
-              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-              [class]="
-                mode() === 'technologies'
-                  ? 'bg-white text-gray-800 shadow-sm font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              "
-            >
-              Technologien
-            </button>
-            <button
-              (click)="setMode('network')"
-              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-              [class]="
-                mode() === 'network'
-                  ? 'bg-white text-gray-800 shadow-sm font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              "
-            >
-              Netzwerk
-            </button>
-          </div>
+          <app-toggle [options]="modes" [value]="mode()" (changed)="setMode($event)" />
         } @else {
-          <div class="flex items-center gap-1 bg-gray-100 rounded-full p-0.5 shrink-0">
-            <button
-              (click)="setFieldMode('tiles')"
-              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-              [class]="
-                fieldMode() === 'tiles'
-                  ? 'bg-white text-gray-800 shadow-sm font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              "
-            >
-              Verteilung
-            </button>
-            <button
-              (click)="setFieldMode('metrics')"
-              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-              [class]="
-                fieldMode() === 'metrics'
-                  ? 'bg-white text-gray-800 shadow-sm font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              "
-            >
-              Kennzahlen
-            </button>
-            <button
-              (click)="setFieldMode('search')"
-              class="text-xs px-3 py-1 rounded-full cursor-pointer transition-colors"
-              [class]="
-                fieldMode() === 'search'
-                  ? 'bg-white text-gray-800 shadow-sm font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              "
-            >
-              Suche
-            </button>
-          </div>
+          <app-toggle [options]="fieldModes" [value]="fieldMode()" (changed)="setFieldMode($event)" />
         }
       </div>
     </div>
@@ -123,24 +56,20 @@
 
         @if (selectedOrganisation()) {
           <div class="absolute bottom-3 inset-x-0 z-10 px-3">
-            <app-organisation-detail
+            <app-organisation-preview
               [organisation]="selectedOrganisation()!.organisation"
               [projectCount]="selectedOrganisation()!.projectCount"
               [cooperationCount]="selectedOrganisation()!.cooperationCount"
               (detailsRequested)="openOrganisation($event)"
               (closed)="closePanels()"
             >
-            </app-organisation-detail>
+            </app-organisation-preview>
           </div>
         }
 
         @if (selectedProject()) {
           <div class="absolute bottom-3 inset-x-0 z-10 px-3">
-            <app-project-detail
-              [selection]="selectedProject()!"
-              (closed)="closePanels()"
-              (detailsRequested)="openProject($event)"
-            ></app-project-detail>
+            <app-project-preview [selection]="selectedProject()!" (closed)="closePanels()" (detailsRequested)="openProject($event)"></app-project-preview>
           </div>
         }
       </div>

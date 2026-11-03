@@ -18,9 +18,7 @@ export class ProjectService {
     }),
     loader: ({ params }) =>
       firstValueFrom(
-        params.dataset === '' || params.id === ''
-          ? of(emptyProjectDetail())
-          : this.http.get<ProjectDetail>(this.getApiUrl(params.dataset, params.id)),
+        params.dataset === '' || params.id === '' ? of(emptyProjectDetail()) : this.http.get<ProjectDetail>(this.getApiUrl(params.dataset, params.id)),
       ),
   });
 

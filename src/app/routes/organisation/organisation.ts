@@ -1,14 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { useOrigin } from '@shared/navigation/origin';
 import { OrganisationService } from '@shared/services/organisation-service';
 import { FieldProfileRow, OrganisationProjectRow } from '@shared/models/organisation.model';
 import { organisationColor, organisationTypeName } from '@shared/models/network.model';
 import { cityOnly, countRunning, oid, titleCase, toDate } from '@shared/utils/details.utils';
+import { Spinner } from '../../ui/spinner/spinner';
+import { Section } from '../../ui/section/section';
+import { Field } from '../../ui/field/field';
+import { StatCard } from '../../ui/stat-card/stat-card';
 
 @Component({
   selector: 'app-organisation',
-  imports: [],
+  imports: [Spinner, Section, Field, StatCard],
   templateUrl: './organisation.html',
   styleUrl: './organisation.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,20 +22,10 @@ export class Organisation {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly service = inject(OrganisationService);
-
-  private readonly origin = signal<{ url: string | null; label: string | null }>({
-    url: null,
-    label: null,
-  });
+  protected readonly nav = useOrigin({ title: () => this.organisation()?.name ?? 'Organisation' });
 
   constructor() {
-    this.route.paramMap
-      .pipe(takeUntilDestroyed())
-      .subscribe((params) => this.service.selectedId.set(params.get('id') ?? ''));
-
-    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.origin.set({ url: params.get('from'), label: params.get('fromLabel') });
-    });
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => this.service.selectedId.set(params.get('id') ?? ''));
   }
 
   readonly organisation = computed(() => this.service.data.value()?.organisation ?? null);
@@ -46,9 +41,7 @@ export class Organisation {
     if (!address) return [];
     const street = [address.street, address.house_number].filter(Boolean).join(' ');
     const city = [address.postal_code, cityOnly(address.city)].filter(Boolean).join(' ');
-    const country = address.country_code
-      ? [titleCase(address.country), `(${address.country_code})`].filter(Boolean).join(' ')
-      : titleCase(address.country);
+    const country = address.country_code ? [titleCase(address.country), `(${address.country_code})`].filter(Boolean).join(' ') : titleCase(address.country);
     return [street, city, country].filter((line) => line.trim().length > 0);
   });
 
@@ -57,19 +50,14 @@ export class Organisation {
     return status ? countRunning(status) : 0;
   });
 
-  private readonly maxFieldCount = computed(() =>
-    Math.max(1, ...this.fields().map((field) => field.projects)),
-  );
+  private readonly maxFieldCount = computed(() => Math.max(1, ...this.fields().map((field) => field.projects)));
 
-  private readonly maxProgrammeCount = computed(() =>
-    Math.max(1, ...this.programmes().map((programme) => programme.projects)),
-  );
+  private readonly maxProgrammeCount = computed(() => Math.max(1, ...this.programmes().map((programme) => programme.projects)));
 
-  readonly fieldSum = computed(() => this.metrics()?.fieldAssignments ?? 0);
-
-  readonly multiField = computed(() => this.fieldSum() > (this.metrics()?.projects ?? 0));
-
-  readonly backLabel = computed(() => this.origin().label ?? 'Zurück zur Übersicht');
+  readonly fieldCount = computed(() => {
+    const metrics = this.metrics();
+    return metrics ? `(${metrics.fields} von ${metrics.fieldsTotal})` : '';
+  });
 
   barWidth(count: number): string {
     return `${Math.round((count / this.maxFieldCount()) * 100)}%`;
@@ -77,10 +65,6 @@ export class Organisation {
 
   programmeBarWidth(count: number): string {
     return `${Math.round((count / this.maxProgrammeCount()) * 100)}%`;
-  }
-
-  markerLeft(): string {
-    return `${Math.round((this.metrics()?.specialisation ?? 0) * 100)}%`;
   }
 
   fieldShare(field: FieldProfileRow): string {
@@ -99,17 +83,8 @@ export class Organisation {
     return type ? organisationTypeName(type) : '';
   }
 
-  goBack(): void {
-    const url = this.origin().url;
-    if (url) {
-      this.router.navigateByUrl(url);
-      return;
-    }
-    this.router.navigate(['/key-technologies']);
-  }
-
   openProject(row: OrganisationProjectRow): void {
-    this.router.navigate(['/project', row._id], { queryParams: this.handover() });
+    this.router.navigate(['/project', row._id], { queryParams: this.nav.handover() });
   }
 
   openField(field: FieldProfileRow): void {
@@ -119,14 +94,7 @@ export class Organisation {
   }
 
   openPartner(id: string): void {
-    this.router.navigate(['/organisation', id], { queryParams: this.handover() });
-  }
-
-  private handover() {
-    return {
-      from: this.router.url,
-      fromLabel: `Zurück zu ${this.organisation()?.name ?? 'Organisation'}`,
-    };
+    this.router.navigate(['/organisation', id], { queryParams: this.nav.handover() });
   }
 
   label(row: { short: string | null; title: string | null }): string {

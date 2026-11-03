@@ -62,11 +62,7 @@ export function createMatcher(raw: string): Matcher {
   };
 }
 
-export function toHits<T>(
-  items: readonly T[],
-  matcher: Matcher,
-  toHit: (item: T) => Omit<SearchHit, 'parts'> | null,
-): SearchHit[] {
+export function toHits<T>(items: readonly T[], matcher: Matcher, toHit: (item: T) => Omit<SearchHit, 'parts'> | null): SearchHit[] {
   if (!matcher.active) return [];
 
   const hits: SearchHit[] = [];
@@ -76,7 +72,5 @@ export function toHits<T>(
     hits.push({ ...base, parts: matcher.split(base.label) });
   }
 
-  return hits.sort(
-    (a, b) => matcher.rank(a.label) - matcher.rank(b.label) || a.label.localeCompare(b.label),
-  );
+  return hits.sort((a, b) => matcher.rank(a.label) - matcher.rank(b.label) || a.label.localeCompare(b.label));
 }

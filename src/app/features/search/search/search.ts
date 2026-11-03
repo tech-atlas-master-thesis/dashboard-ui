@@ -5,6 +5,9 @@ import { DatasetsState } from '../../../state/datasets/datasets.state';
 import { SearchResponse, SearchService } from '@shared/services/search-service';
 import { MIN_SEARCH_LENGTH, SearchHit, createMatcher, toHits } from '@shared/utils/search.utils';
 import { organisationColor, organisationTypeName } from '@shared/models/network.model';
+import { Icon } from '../../../ui/icon/icon';
+import { HitRow } from '../hit-row/hit-row';
+import { Spinner } from '@ui/spinner/spinner';
 
 interface Target {
   kind: 'organisation' | 'project';
@@ -13,7 +16,7 @@ interface Target {
 
 @Component({
   selector: 'app-search',
-  imports: [],
+  imports: [Icon, HitRow, Spinner],
   templateUrl: './search.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -130,12 +133,9 @@ export class Search {
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
 
     event.preventDefault();
-    const next =
-      (this.active() + (event.key === 'ArrowDown' ? 1 : -1) + targets.length) % targets.length;
+    const next = (this.active() + (event.key === 'ArrowDown' ? 1 : -1) + targets.length) % targets.length;
     this.active.set(next);
-    setTimeout(() =>
-      document.getElementById(`hit-${targets[next].id}`)?.scrollIntoView({ block: 'nearest' }),
-    );
+    setTimeout(() => document.getElementById(`hit-${targets[next].id}`)?.scrollIntoView({ block: 'nearest' }));
   }
 
   int(value: number | null | undefined): string {

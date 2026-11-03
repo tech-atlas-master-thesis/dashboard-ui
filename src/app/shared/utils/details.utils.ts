@@ -16,8 +16,7 @@ export const toDate = (value: BsonDate | null | undefined): Date | null => {
 
 const RUNNING_STATUS = new Set(['laufend', 'ongoing', 'running', 'in durchführung']);
 
-export const isRunning = (status: string | null | undefined): boolean =>
-  !!status && RUNNING_STATUS.has(status.trim().toLowerCase());
+export const isRunning = (status: string | null | undefined): boolean => !!status && RUNNING_STATUS.has(status.trim().toLowerCase());
 
 export const countRunning = (status: Record<string, number>): number =>
   Object.entries(status)
@@ -49,10 +48,7 @@ export const toParagraphs = (text: string | null | undefined): string[] => {
 
 export const titleCase = (value: string | null | undefined): string => {
   if (!value) return '';
-  return value.length > 3 && value === value.toUpperCase()
-    ? value.charAt(0) + value.slice(1).toLowerCase()
-    : value;
+  return value.length > 3 && value === value.toUpperCase() ? value.charAt(0) + value.slice(1).toLowerCase() : value;
 };
 
-export const cityOnly = (city: string | null | undefined): string =>
-  city?.split(',')[0]?.trim() ?? '';
+export const cityOnly = (city: string | null | undefined): string => city?.split(',')[0]?.trim() ?? '';

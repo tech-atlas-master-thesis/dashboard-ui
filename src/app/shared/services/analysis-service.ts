@@ -14,11 +14,7 @@ export class AnalysisService {
     params: () => this.datasetState.selectedDataset(),
     loader: ({ params }) =>
       firstValueFrom(
-        params === ''
-          ? of(emptyAnalysis())
-          : this.http.get<FieldAnalysis>(
-              `${environment.baseUrl}${environment.apiUrl}/data/${params}/analysis/fields`,
-            ),
+        params === '' ? of(emptyAnalysis()) : this.http.get<FieldAnalysis>(`${environment.baseUrl}${environment.apiUrl}/data/${params}/analysis/fields`),
       ),
   });
 }

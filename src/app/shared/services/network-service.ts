@@ -14,12 +14,7 @@ export class NetworkService {
 
   readonly data = resource({
     params: () => this.apiUrl(),
-    loader: ({ params }) =>
-      firstValueFrom(
-        params === ''
-          ? of({ nodes: [], projects: [] } as NetworkData)
-          : this.http.get<NetworkData>(params),
-      ),
+    loader: ({ params }) => firstValueFrom(params === '' ? of({ nodes: [], projects: [] } as NetworkData) : this.http.get<NetworkData>(params)),
   });
 
   private base(): string {

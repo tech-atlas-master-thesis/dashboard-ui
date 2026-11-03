@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  EventEmitter,
-  inject,
-  Output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, EventEmitter, inject, Output, signal } from '@angular/core';
 import { AnalysisService } from '@shared/services/analysis-service';
 import { FieldMetricsRow } from '@shared/models/analysis.model';
 
@@ -45,13 +37,9 @@ export class Metrics {
 
     return [...data.fields].sort((a, b) => {
       if (key === 'label') {
-        return dir === 'asc'
-          ? a.label.localeCompare(b.label, 'de')
-          : b.label.localeCompare(a.label, 'de');
+        return dir === 'asc' ? a.label.localeCompare(b.label, 'de') : b.label.localeCompare(a.label, 'de');
       }
-      return dir === 'asc'
-        ? (a[key] as number) - (b[key] as number)
-        : (b[key] as number) - (a[key] as number);
+      return dir === 'asc' ? (a[key] as number) - (b[key] as number) : (b[key] as number) - (a[key] as number);
     });
   });
 

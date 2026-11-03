@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  HostListener,
-  Input,
-  Output,
-  computed,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, signal } from '@angular/core';
 import {
   DEFAULT_BUNDLE_FROM,
   NetworkData,
@@ -19,26 +10,48 @@ import {
 } from '@shared/models/network.model';
 import { NO_VALUE, matchesFilters } from '@shared/utils/network-filter.utils';
 import { SearchHit, createMatcher, toHits } from '@shared/utils/search.utils';
+import { HitRow } from '@search/hit-row/hit-row';
+import { Icon } from '@ui/icon/icon';
+import { FilterChip, FilterChipMeta } from '@ui/filter/filter-chip/filter-chip';
+import { FilterOption, FilterOptionView } from '@ui/filter/filter-option/filter-option';
+import { Popover, PopoverWidth } from '@ui/filter/popover/popover';
 
-export type Facet = 'date' | 'statuses' | 'organisationTypes' | 'programmes' | 'bundling';
+export type FilterKey = 'date' | 'statuses' | 'organisationTypes' | 'programmes' | 'bundling';
 
-type ListFacet = 'statuses' | 'organisationTypes' | 'programmes';
+const LIST_FILTERS = ['statuses', 'organisationTypes', 'programmes'] as const;
 
-type ProjectFacet = Parameters<typeof matchesFilters>[2];
+type ListFilterKey = (typeof LIST_FILTERS)[number];
 
-type CountFacet = NonNullable<ProjectFacet> | 'organisationTypes';
+type ProjectFilterKey = Parameters<typeof matchesFilters>[2];
 
-const NO_VALUE_LABEL: Record<ListFacet, string> = {
+type CountFilterKey = NonNullable<ProjectFilterKey> | 'organisationTypes';
+
+const NO_VALUE_LABEL: Record<ListFilterKey, string> = {
   statuses: 'Ohne Status',
   organisationTypes: 'Ohne Typ',
   programmes: 'Ohne Programmlinie',
+};
+
+interface FilterMeta extends FilterChipMeta {
+  popoverTitle?: string;
+  width: PopoverWidth;
+  resetLabel?: string;
+  scroll?: boolean;
+}
+
+const FILTERS: Record<FilterKey, FilterMeta> = {
+  date: { label: 'Zeitraum', numeric: true, popoverTitle: 'Projektstart', width: '72' },
+  statuses: { label: 'Status', width: '72', resetLabel: 'alle' },
+  organisationTypes: { label: 'Typ', fullLabel: 'Organisationstyp', width: '80', resetLabel: 'alle' },
+  programmes: { label: 'Linie', fullLabel: 'Programmlinie', width: '96', resetLabel: 'alle', scroll: true },
+  bundling: { label: 'Bündelung', numeric: true, width: '72', resetLabel: 'Standard' },
 };
 
 const byCount = (a: { count: number }, b: { count: number }) => b.count - a.count;
 
 @Component({
   selector: 'app-network-filter',
-  imports: [],
+  imports: [Icon, FilterChip, Popover, FilterOption, HitRow],
   templateUrl: './network-filter.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -60,19 +73,15 @@ export class NetworkFilter {
   private readonly allowedOrgIds = computed(() => {
     const types = this._filters().organisationTypes;
     if (!types.length) return null;
-    return new Set(
-      (this._data()?.nodes ?? [])
-        .filter((n) => types.includes(n.type || NO_VALUE))
-        .map((n) => n._id.$oid),
-    );
+    return new Set((this._data()?.nodes ?? []).filter((n) => types.includes(n.type || NO_VALUE)).map((n) => n._id.$oid));
   });
 
-  private survivingProjects(except?: CountFacet) {
+  private survivingProjects(except?: CountFilterKey) {
     const projects = this._data()?.projects ?? [];
     const f = this._filters();
 
-    const projectFacet: ProjectFacet = except === 'organisationTypes' ? undefined : except;
-    const base = projects.filter((p) => matchesFilters(p, f, projectFacet));
+    const projectKey: ProjectFilterKey = except === 'organisationTypes' ? undefined : except;
+    const base = projects.filter((p) => matchesFilters(p, f, projectKey));
 
     if (except === 'organisationTypes') return base;
 
@@ -82,7 +91,7 @@ export class NetworkFilter {
     return base.filter((p) => p.organisations.some((id) => allowed.has(id)));
   }
 
-  readonly openFacet = signal<Facet | null>(null);
+  readonly openFilter = signal<FilterKey | null>(null);
 
   readonly search = signal('');
   readonly searchOpen = signal(false);
@@ -132,7 +141,7 @@ export class NetworkFilter {
     const next = (this.activeIndex() + (event.key === 'ArrowDown' ? 1 : -1) + total) % total;
     this.activeIndex.set(next);
     setTimeout(() =>
-      document.getElementById(`result-${this.flatResults()[next]}`)?.scrollIntoView({
+      document.getElementById(`hit-${this.flatResults()[next]}`)?.scrollIntoView({
         block: 'nearest',
       }),
     );
@@ -205,12 +214,50 @@ export class NetworkFilter {
     this.closeSearch();
   }
 
-  toggleFacet(facet: Facet): void {
-    this.openFacet.update((open) => (open === facet ? null : facet));
+  meta(key: FilterKey): FilterMeta {
+    return FILTERS[key];
   }
 
-  closeMenu(): void {
-    this.openFacet.set(null);
+  private isListFilter(key: FilterKey): key is ListFilterKey {
+    return (LIST_FILTERS as readonly string[]).includes(key);
+  }
+
+  readonly visibleFilters = computed<FilterKey[]>(() =>
+    (Object.keys(FILTERS) as FilterKey[]).filter((key) => !this.isListFilter(key) || this.optionViews()[key].length > 0),
+  );
+
+  private readonly optionViews = computed<Record<ListFilterKey, FilterOptionView[]>>(() => ({
+    statuses: this.statuses().map((s) => ({
+      key: s.key,
+      label: s.label,
+      count: s.count,
+      share: this.statusWidth(s.count),
+    })),
+    organisationTypes: this.organisationTypes().map((t) => ({
+      key: t.key,
+      label: t.label,
+      count: t.count,
+      share: this.typeWidth(t.count),
+      color: t.color,
+    })),
+    programmes: this.programmes().map((p) => ({
+      key: p.id,
+      label: p.name,
+      count: p.count,
+      share: this.programmeWidth(p.count),
+    })),
+  }));
+
+  options(key: FilterKey): FilterOptionView[] {
+    return this.isListFilter(key) ? this.optionViews()[key] : [];
+  }
+
+  toggleFilter(key: FilterKey): void {
+    this.openFilter.update((open) => (open === key ? null : key));
+  }
+
+  private closeMenu(): void {
+    this.openFilter.set(null);
   }
 
   private readonly activeCount = computed(() => {
@@ -267,15 +314,12 @@ export class NetworkFilter {
 
     for (const id of this._filters().programmes) {
       if (counts.has(id)) continue;
-      const name = (this._data()?.projects ?? []).find((p) => p.programme?._id === id)?.programme
-        ?.name;
+      const name = (this._data()?.projects ?? []).find((p) => p.programme?._id === id)?.programme?.name;
       names.set(id, name ?? NO_VALUE_LABEL.programmes);
       counts.set(id, 0);
     }
 
-    return [...names]
-      .map(([key, name]) => ({ id: key, key, name, count: counts.get(key) ?? 0 }))
-      .sort((a, b) => byCount(a, b) || a.name.localeCompare(b.name));
+    return [...names].map(([key, name]) => ({ id: key, key, name, count: counts.get(key) ?? 0 })).sort((a, b) => byCount(a, b) || a.name.localeCompare(b.name));
   });
 
   statuses = computed(() => {
@@ -324,52 +368,48 @@ export class NetworkFilter {
       .sort((a, b) => byCount(a, b) || a.label.localeCompare(b.label));
   });
 
-  private readonly maxProgramme = computed(() =>
-    Math.max(1, ...this.programmes().map((p) => p.count)),
-  );
+  private readonly maxProgramme = computed(() => Math.max(1, ...this.programmes().map((p) => p.count)));
 
   private readonly maxStatus = computed(() => Math.max(1, ...this.statuses().map((s) => s.count)));
 
-  private readonly maxType = computed(() =>
-    Math.max(1, ...this.organisationTypes().map((t) => t.count)),
-  );
+  private readonly maxType = computed(() => Math.max(1, ...this.organisationTypes().map((t) => t.count)));
 
-  programmeWidth(count: number): string {
+  private programmeWidth(count: number): string {
     return `${Math.round((count / this.maxProgramme()) * 100)}%`;
   }
 
-  statusWidth(count: number): string {
+  private statusWidth(count: number): string {
     return `${Math.round((count / this.maxStatus()) * 100)}%`;
   }
 
-  typeWidth(count: number): string {
+  private typeWidth(count: number): string {
     return `${Math.round((count / this.maxType()) * 100)}%`;
   }
 
-  facetSummary(facet: Facet): string {
+  filterSummary(key: FilterKey): string {
     const f = this._filters();
 
-    if (facet === 'date') return this.dateLabel();
-    if (facet === 'bundling') return `ab ${this.bundleFrom()}`;
+    if (key === 'date') return this.dateLabel();
+    if (key === 'bundling') return `ab ${this.bundleFrom()}`;
 
-    const chosen = f[facet];
+    const chosen = f[key];
     if (!chosen.length) return '';
 
-    const total = this.optionCount(facet);
-    if (chosen.length === 1) return this.nameOf(facet, chosen[0]);
+    const total = this.optionCount(key);
+    if (chosen.length === 1) return this.nameOf(key, chosen[0]);
     return `${chosen.length} von ${total}`;
   }
 
-  private optionCount(facet: ListFacet): number {
-    if (facet === 'statuses') return this.statuses().length;
-    if (facet === 'organisationTypes') return this.organisationTypes().length;
+  private optionCount(key: ListFilterKey): number {
+    if (key === 'statuses') return this.statuses().length;
+    if (key === 'organisationTypes') return this.organisationTypes().length;
     return this.programmes().length;
   }
 
-  private nameOf(facet: ListFacet, value: string): string {
-    if (value === NO_VALUE) return NO_VALUE_LABEL[facet];
-    if (facet === 'statuses') return projectStatusName(value);
-    if (facet === 'organisationTypes') return organisationTypeName(value);
+  private nameOf(key: ListFilterKey, value: string): string {
+    if (value === NO_VALUE) return NO_VALUE_LABEL[key];
+    if (key === 'statuses') return projectStatusName(value);
+    if (key === 'organisationTypes') return organisationTypeName(value);
     return this.programmes().find((p) => p.id === value)?.name ?? value;
   }
 
@@ -379,11 +419,11 @@ export class NetworkFilter {
       .map((type) => (type === NO_VALUE ? '#d1d5db' : organisationColor(type))),
   );
 
-  isSet(facet: Facet): boolean {
+  isSet(key: FilterKey): boolean {
     const f = this._filters();
-    if (facet === 'date') return !!(f.dateFrom || f.dateTo);
-    if (facet === 'bundling') return this.bundling();
-    return f[facet].length > 0;
+    if (key === 'date') return !!(f.dateFrom || f.dateTo);
+    if (key === 'bundling') return this.bundling();
+    return f[key].length > 0;
   }
 
   private readonly dateLabel = computed(() => {
@@ -396,16 +436,16 @@ export class NetworkFilter {
     return '';
   });
 
-  clear(facet: Facet): void {
-    if (facet === 'date') {
+  clear(key: FilterKey): void {
+    if (key === 'date') {
       this.clearDates();
       return;
     }
-    if (facet === 'bundling') {
+    if (key === 'bundling') {
       this.resetBundling();
       return;
     }
-    this.clearFacet(facet);
+    this.filtersChange.emit({ ...this._filters(), [key]: [] });
   }
 
   private toggleIn(list: string[], all: string[], value: string): string[] {
@@ -418,52 +458,22 @@ export class NetworkFilter {
     return next.size === all.length ? [] : [...next];
   }
 
-  isActive(list: string[], value: string): boolean {
+  isActive(key: FilterKey, value: string): boolean {
+    if (!this.isListFilter(key)) return false;
+    const list = this._filters()[key];
     return list.length === 0 || list.includes(value);
   }
 
-  toggleProgramme(id: string): void {
+  toggleOption(key: FilterKey, value: string): void {
+    if (!this.isListFilter(key)) return;
     const f = this._filters();
-    this.filtersChange.emit({
-      ...f,
-      programmes: this.toggleIn(
-        f.programmes,
-        this.programmes().map((p) => p.id),
-        id,
-      ),
-    });
+    const all = this.options(key).map((o) => o.key);
+    this.filtersChange.emit({ ...f, [key]: this.toggleIn(f[key], all, value) });
   }
 
-  toggleStatus(s: string): void {
-    const f = this._filters();
-    this.filtersChange.emit({
-      ...f,
-      statuses: this.toggleIn(
-        f.statuses,
-        this.statuses().map((st) => st.key),
-        s,
-      ),
-    });
-  }
-
-  toggleType(t: string): void {
-    const f = this._filters();
-    this.filtersChange.emit({
-      ...f,
-      organisationTypes: this.toggleIn(
-        f.organisationTypes,
-        this.organisationTypes().map((x) => x.key),
-        t,
-      ),
-    });
-  }
-
-  only(facet: ListFacet, value: string): void {
-    this.filtersChange.emit({ ...this._filters(), [facet]: [value] });
-  }
-
-  clearFacet(facet: ListFacet): void {
-    this.filtersChange.emit({ ...this._filters(), [facet]: [] });
+  only(key: FilterKey, value: string): void {
+    if (!this.isListFilter(key)) return;
+    this.filtersChange.emit({ ...this._filters(), [key]: [value] });
   }
 
   setDateFrom(value: string): void {

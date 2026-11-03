@@ -15,7 +15,9 @@
     "target": "ES2023",
     "module": "preserve",
     "paths": {
-      "@shared/*": ["./src/app/shared/*"]
+      "@shared/*": ["./src/app/shared/*"],
+      "@ui/*": ["./src/app/ui/*"],
+      "@search/*": ["./src/app/features/search/*"]
     }
   },
   "angularCompilerOptions": {

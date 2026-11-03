@@ -1,20 +1,13 @@
 <div class="h-full w-full bg-white p-3 flex flex-col gap-2">
   @if (service.data.isLoading()) {
     <div class="flex-1 flex items-center justify-center">
-      <div
-        class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"
-      ></div>
+      <app-spinner size="lg" />
     </div>
   } @else if (technology()) {
     <div class="flex items-center gap-4 shrink-0 h-8 px-3">
-      <button (click)="goBack()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">
-        ← {{ backLabel() }}
-      </button>
+      <button (click)="nav.goBack()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">← {{ nav.backLabel() }}</button>
       <div class="w-px h-5 bg-gray-300"></div>
-      <p
-        class="text-xs font-medium px-2 py-1 rounded-2xl text-white"
-        [style.background]="field()!.style.color"
-      >
+      <p class="text-xs font-medium px-2 py-1 rounded-2xl text-white" [style.background]="field()!.style.color">
         {{ field()!.label }} → {{ technology()!.label }}
       </p>
 
@@ -39,30 +32,24 @@
 
       @if (selectedOrganisation()) {
         <div class="absolute bottom-3 inset-x-0 z-10 px-3">
-          <app-organisation-detail
+          <app-organisation-preview
             [organisation]="selectedOrganisation()!.organisation"
             [projectCount]="selectedOrganisation()!.projectCount"
             [cooperationCount]="selectedOrganisation()!.cooperationCount"
             (detailsRequested)="openOrganisation($event)"
             (closed)="closePanels()"
           >
-          </app-organisation-detail>
+          </app-organisation-preview>
         </div>
       }
 
       @if (selectedProject()) {
         <div class="absolute bottom-3 inset-x-0 z-10 px-3">
-          <app-project-detail
-            [selection]="selectedProject()!"
-            (detailsRequested)="openProject($event)"
-            (closed)="closePanels()"
-          ></app-project-detail>
+          <app-project-preview [selection]="selectedProject()!" (detailsRequested)="openProject($event)" (closed)="closePanels()"></app-project-preview>
         </div>
       }
     </div>
   } @else {
-    <div class="flex-1 flex items-center justify-center text-gray-400">
-      Technologie nicht gefunden.
-    </div>
+    <div class="flex-1 flex items-center justify-center text-gray-400">Technologie nicht gefunden.</div>
   }
 </div>

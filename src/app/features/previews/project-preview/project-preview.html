@@ -1,0 +1,20 @@
+<app-preview-card [title]="title()" [accent]="typeColor" actionLabel="Alle Daten zum Projekt" (closed)="closed.emit()" (actionRequested)="openDetails()">
+  <div class="flex items-center gap-2">
+    <p class="text-xs text-gray-500">{{ project().short }}</p>
+  </div>
+
+  <div class="flex flex-row gap-4 text-xs text-gray-500 border-t border-gray-300 pt-2">
+    @if (start() || end()) {
+      <p>Zeitraum: {{ start() ? (start() | date: 'MM/yyyy') : '?' }} – {{ end() ? (end() | date: 'MM/yyyy') : 'offen' }}</p>
+    }
+    @if (project().status) {
+      <p>Status: {{ statusName() }}</p>
+    }
+    @if (project().programme) {
+      <p>Programm: {{ project().programme!.name }}</p>
+    }
+    @if (partnerCount()) {
+      <p>Beteiligung: {{ partnerCount() }} {{ partnerCount() === 1 ? 'Organisation' : 'Organisationen' }}</p>
+    }
+  </div>
+</app-preview-card>

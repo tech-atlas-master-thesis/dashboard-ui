@@ -15,9 +15,7 @@ export class KeyTechnologyService {
   readonly data = resource({
     params: () => this.datasetState.selectedDataset(),
     loader: ({ params }) => {
-      return firstValueFrom(
-        params === '' ? of([]) : this.http.get<TechnologyField[]>(this.getApiUrl(params)),
-      );
+      return firstValueFrom(params === '' ? of([]) : this.http.get<TechnologyField[]>(this.getApiUrl(params)));
     },
   });
 

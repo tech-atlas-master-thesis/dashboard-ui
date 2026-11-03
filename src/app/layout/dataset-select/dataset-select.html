@@ -5,11 +5,7 @@
       <option [value]="pipeline">{{ pipeline }}</option>
     }
   </select>
-  <select
-    [(ngModel)]="datasetState.selectedDataset"
-    [disabled]="datasetState.selectedPipeline() === ''"
-    class="font-light text-xs"
-  >
+  <select [(ngModel)]="datasetState.selectedDataset" [disabled]="datasetState.selectedPipeline() === ''" class="font-light text-xs">
     <option value="">Datensatz</option>
     @for (dataset of datasetState.datasets.value(); track dataset.pipeline) {
       <option [value]="dataset._id">{{ dataset.created.at | date: 'dd.MM.yyyy HH:mm' }}</option>
