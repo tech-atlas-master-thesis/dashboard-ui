@@ -1,6 +1,6 @@
 @if (service.fields.isLoading()) {
   <div class="h-full flex flex-col items-center justify-center gap-4">
-    <div class="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
+    <app-spinner size="lg" />
     <p class="text-gray-400 font-light text-sm">Kennzahlen werden berechnet ...</p>
   </div>
 } @else if (rows().length) {
@@ -20,101 +20,19 @@
             </button>
           </div>
 
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('projects')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('projects') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Projekte
-              <p>{{ caret('projects') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('organisations')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('organisations') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Organisationen
-              <p>{{ caret('organisations') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('cooperations')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('cooperations') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Kooperationen
-              <p>{{ caret('cooperations') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('degreeMean')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('degreeMean') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Ø Partner
-              <p>{{ caret('degreeMean') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('projectsWithoutPartnerShare')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('projectsWithoutPartnerShare') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Einzelprojekte
-              <p>{{ caret('projectsWithoutPartnerShare') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('componentsFromTwo')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('componentsFromTwo') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Teilnetze
-              <p>{{ caret('componentsFromTwo') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('isolatedShare')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('isolatedShare') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Isoliert
-              <p>{{ caret('isolatedShare') }}</p>
-            </button>
-          </div>
-
-          <div class="w-30 shrink-0 flex justify-center">
-            <button
-              type="button"
-              (click)="sortBy('academicLeadShare')"
-              class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
-              [class]="isSorted('academicLeadShare') ? 'text-black font-semibold' : 'text-gray-500'"
-            >
-              Wiss. Leitung
-              <p>{{ caret('academicLeadShare') }}</p>
-            </button>
-          </div>
+          @for (column of columns; track column.key) {
+            <div class="w-30 shrink-0 flex justify-center">
+              <button
+                type="button"
+                (click)="sortBy(column.key)"
+                class="text-xs cursor-pointer flex items-baseline gap-1 hover:text-black"
+                [class]="isSorted(column.key) ? 'text-black font-semibold' : 'text-gray-500'"
+              >
+                {{ column.label }}
+                <p>{{ caret(column.key) }}</p>
+              </button>
+            </div>
+          }
         </div>
 
         @for (row of rows(); track row._id) {
@@ -130,30 +48,9 @@
               </button>
             </div>
 
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ int(row.projects) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ int(row.organisations) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ int(row.cooperations) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ dec(row.degreeMean) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ pct(row.projectsWithoutPartnerShare, 0) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ int(row.componentsFromTwo) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ pct(row.isolatedShare) }}
-            </div>
-            <div class="w-30 shrink-0 text-center text-xs tabular-nums">
-              {{ pct(row.academicLeadShare, 0) }}
-            </div>
+            @for (column of columns; track column.key) {
+              <div class="w-30 shrink-0 text-center text-xs tabular-nums">{{ column.value(row) }}</div>
+            }
           </div>
         }
       </div>
@@ -164,43 +61,12 @@
         <summary class="cursor-pointer select-none text-gray-600 hover:text-gray-500">Was bedeuten die Spalten?</summary>
 
         <dl class="mt-3 grid grid-cols-1 gap-x-10 gap-y-2 md:grid-cols-2">
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Projekte</dt>
-            <dd>Geförderte Projekte, die mindestens einer Technologie dieses Felds zugeordnet sind.</dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Organisationen</dt>
-            <dd>Beteiligte Organisationen, jede einmal gezählt — egal an wie vielen Projekten sie mitarbeitet.</dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Kooperationen</dt>
-            <dd>
-              Paare von Organisationen, die mindestens einmal gemeinsam in einem Projekt sitzen. Ein Paar zählt einmal, auch wenn es mehrfach zusammenarbeitet.
-            </dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Ø Partner</dt>
-            <dd>Mit wie vielen verschiedenen Organisationen eine Organisation im Schnitt zusammenarbeitet.</dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Einzelprojekte</dt>
-            <dd>Anteil der Projekte mit nur einem Beteiligten. Dort entsteht keine Zusammenarbeit.</dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Teilnetze</dt>
-            <dd>
-              Gruppen von Organisationen, die über gemeinsame Projekte untereinander verbunden sind, aber keine Verbindung zu den übrigen Gruppen haben. Gezählt
-              ab zwei Organisationen.
-            </dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Isoliert</dt>
-            <dd>Anteil der Organisationen, die in diesem Feld mit niemandem zusammenarbeiten. In einem anderen Feld können sie gut vernetzt sein.</dd>
-          </div>
-          <div class="flex gap-2">
-            <dt class="w-30 shrink-0 font-medium text-gray-700">Wiss. Leitung</dt>
-            <dd>Anteil der Projekte, deren Konsortialführer eine Universität, Fachhochschule oder außeruniversitäre Forschungseinrichtung ist.</dd>
-          </div>
+          @for (column of columns; track column.key) {
+            <div class="flex gap-2">
+              <dt class="w-30 shrink-0 font-medium text-gray-700">{{ column.label }}</dt>
+              <dd>{{ column.hint }}</dd>
+            </div>
+          }
         </dl>
 
         <p class="mt-3">

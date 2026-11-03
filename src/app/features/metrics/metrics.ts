@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, EventEmitter, inject, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { AnalysisService } from '@shared/services/analysis-service';
 import { FieldMetricsRow } from '@shared/models/analysis.model';
+import { Spinner } from '../../ui/spinner/spinner';
 
 type SortKey =
   | 'label'
@@ -13,9 +14,16 @@ type SortKey =
   | 'isolatedShare'
   | 'academicLeadShare';
 
+interface MetricColumn {
+  key: Exclude<SortKey, 'label'>;
+  label: string;
+  value: (row: FieldMetricsRow) => string;
+  hint: string;
+}
+
 @Component({
   selector: 'app-metrics',
-  imports: [],
+  imports: [Spinner],
   templateUrl: './metrics.html',
   styleUrl: './metrics.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,10 +31,65 @@ type SortKey =
 export class Metrics {
   public service = inject(AnalysisService);
 
-  @Output() fieldSelected = new EventEmitter<string>();
+  readonly fieldSelected = output<string>();
 
   sortKey = signal<SortKey>('projects');
   sortDir = signal<'asc' | 'desc'>('desc');
+
+  readonly columns: readonly MetricColumn[] = [
+    {
+      key: 'projects',
+      label: 'Projekte',
+      value: (row) => this.int(row.projects),
+      hint: 'Geförderte Projekte, die mindestens einer Technologie dieses Felds zugeordnet sind.',
+    },
+    {
+      key: 'organisations',
+      label: 'Organisationen',
+      value: (row) => this.int(row.organisations),
+      hint: 'Beteiligte Organisationen, jede einmal gezählt — egal an wie vielen Projekten sie mitarbeitet.',
+    },
+    {
+      key: 'cooperations',
+      label: 'Kooperationen',
+      value: (row) => this.int(row.cooperations),
+      hint:
+        'Paare von Organisationen, die mindestens einmal gemeinsam in einem Projekt sitzen. ' +
+        'Ein Paar zählt einmal, auch wenn es mehrfach zusammenarbeitet.',
+    },
+    {
+      key: 'degreeMean',
+      label: 'Ø Partner',
+      value: (row) => this.dec(row.degreeMean),
+      hint: 'Mit wie vielen verschiedenen Organisationen eine Organisation im Schnitt zusammenarbeitet.',
+    },
+    {
+      key: 'projectsWithoutPartnerShare',
+      label: 'Einzelprojekte',
+      value: (row) => this.pct(row.projectsWithoutPartnerShare, 0),
+      hint: 'Anteil der Projekte mit nur einem Beteiligten. Dort entsteht keine Zusammenarbeit.',
+    },
+    {
+      key: 'componentsFromTwo',
+      label: 'Teilnetze',
+      value: (row) => this.int(row.componentsFromTwo),
+      hint:
+        'Gruppen von Organisationen, die über gemeinsame Projekte untereinander verbunden sind, ' +
+        'aber keine Verbindung zu den übrigen Gruppen haben. Gezählt ab zwei Organisationen.',
+    },
+    {
+      key: 'isolatedShare',
+      label: 'Isoliert',
+      value: (row) => this.pct(row.isolatedShare),
+      hint: 'Anteil der Organisationen, die in diesem Feld mit niemandem zusammenarbeiten. ' + 'In einem anderen Feld können sie gut vernetzt sein.',
+    },
+    {
+      key: 'academicLeadShare',
+      label: 'Wiss. Leitung',
+      value: (row) => this.pct(row.academicLeadShare, 0),
+      hint: 'Anteil der Projekte, deren Konsortialführer eine Universität, Fachhochschule oder außeruniversitäre Forschungseinrichtung ist.',
+    },
+  ];
 
   rows = computed<FieldMetricsRow[]>(() => {
     const data = this.service.fields.value();
