@@ -13,7 +13,7 @@ import { Metrics } from '../../features/metrics/metrics';
 import { Search } from '../../features/search/search/search';
 import { Spinner } from '../../ui/spinner/spinner';
 import { Toggle, ToggleOption } from '../../ui/toggle/toggle';
-import { handoverTo } from '@shared/navigation/origin';
+import { originState } from '@shared/navigation/origin';
 
 type D3Node = d3.HierarchyRectangularNode<TechnologyViewModel>;
 type Mode = 'technologies' | 'network';
@@ -178,15 +178,11 @@ export class KeyTechnologies implements OnDestroy {
   }
 
   openOrganisation(id: string): void {
-    this.router.navigate(['/organisation', id], {
-      queryParams: handoverTo(this.router, 'Zurück zum Netzwerk'),
-    });
+    this.router.navigate(['/organisation', id], originState(this.router.url, 'Zurück zum Netzwerk'));
   }
 
   openProject(id: string): void {
-    this.router.navigate(['/project', id], {
-      queryParams: handoverTo(this.router, 'Zurück zum Netzwerk'),
-    });
+    this.router.navigate(['/project', id], originState(this.router.url, 'Zurück zum Netzwerk'));
   }
 
   private withChart(render: () => void, tries = 20): void {
@@ -367,7 +363,7 @@ export class KeyTechnologies implements OnDestroy {
         projects: t.projects,
         color: field.style.color,
         accentColor: field.style.accent,
-        techID: t.short ?? t.label,
+        techID: t.short || t.label,
         value: Math.max(Math.sqrt(t.projects ?? 1), 3),
       })),
     };
@@ -386,7 +382,7 @@ export class KeyTechnologies implements OnDestroy {
 
     this.renderSquares(root.leaves() as D3Node[], (d) => {
       if (d.data.techID) {
-        this.router.navigate(['/key-technologies', d.data.techID], {
+        this.router.navigate(['/key-technologies', field._id.$oid, d.data.techID], {
           queryParams: { view: this.fieldMode() === 'tiles' ? null : this.fieldMode() },
         });
       }

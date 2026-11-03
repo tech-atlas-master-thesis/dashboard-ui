@@ -84,7 +84,7 @@ export class Organisation {
   }
 
   openProject(row: OrganisationProjectRow): void {
-    this.router.navigate(['/project', row._id], { queryParams: this.nav.handover() });
+    this.router.navigate(['/project', row._id], this.nav.handover());
   }
 
   openField(field: FieldProfileRow): void {
@@ -94,22 +94,11 @@ export class Organisation {
   }
 
   openPartner(id: string): void {
-    this.router.navigate(['/organisation', id], { queryParams: this.nav.handover() });
+    this.router.navigate(['/organisation', id], this.nav.handover());
   }
 
   label(row: { short: string | null; title: string | null }): string {
     return row.short || row.title || 'Ohne Titel';
-  }
-
-  int(value: number | null | undefined): string {
-    return (value ?? 0).toLocaleString('de-AT');
-  }
-
-  dec(value: number | null | undefined): string {
-    return (value ?? 0).toLocaleString('de-AT', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    });
   }
 
   year(value: unknown): string {
@@ -124,4 +113,15 @@ export class Organisation {
   }
 
   protected readonly oid = oid;
+
+  int(value: number | null | undefined): string {
+    return (value ?? 0).toLocaleString('de-AT');
+  }
+
+  dec(value: number | null | undefined): string {
+    return (value ?? 0).toLocaleString('de-AT', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+  }
 }

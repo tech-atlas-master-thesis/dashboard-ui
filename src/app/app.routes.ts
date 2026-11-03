@@ -14,7 +14,7 @@ export const routes: Routes = [
     component: KeyTechnologies,
   },
   {
-    path: 'key-technologies/:id',
+    path: 'key-technologies/:field/:id',
     component: KeyTechnologyDetail,
   },
   {

@@ -22,8 +22,6 @@ export class Project {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly service = inject(ProjectService);
-
-  /** Rückweg und Weitergabe — siehe `shared/origin.ts`. */
   protected readonly nav = useOrigin({ title: () => this.label() });
 
   constructor() {
@@ -90,13 +88,11 @@ export class Project {
   }
 
   openOrganisation(participant: ParticipantRow): void {
-    this.router.navigate(['/organisation', oid(participant._id)], {
-      queryParams: this.nav.handover(),
-    });
+    this.router.navigate(['/organisation', oid(participant._id)], this.nav.handover());
   }
 
   openProject(row: RecurringProjectRow): void {
-    this.router.navigate(['/project', row._id], { queryParams: this.nav.handover() });
+    this.router.navigate(['/project', row._id], this.nav.handover());
   }
 
   openField(group: TechnologyField): void {
@@ -106,10 +102,10 @@ export class Project {
     });
   }
 
-  openTechnology(technology: TechnologyRef): void {
-    const id = technology.short || technology.label;
+  openTechnology(group: TechnologyField, technology: TechnologyRef): void {
+    const id = technology.short;
     if (!id) return;
-    this.router.navigate(['/key-technologies', id], { queryParams: this.nav.handover() });
+    this.router.navigate(['/key-technologies', group._id, id], this.nav.handover());
   }
 
   label(): string {
@@ -127,10 +123,6 @@ export class Project {
 
   location(participant: ParticipantRow): string {
     return cityOnly(participant.address?.city) || participant.address?.country || '—';
-  }
-
-  int(value: number | null | undefined): string {
-    return (value ?? 0).toLocaleString('de-AT');
   }
 
   month(value: unknown): string {
@@ -155,4 +147,8 @@ export class Project {
   }
 
   protected readonly oid = oid;
+
+  int(value: number | null | undefined): string {
+    return (value ?? 0).toLocaleString('de-AT');
+  }
 }

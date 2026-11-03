@@ -5,7 +5,7 @@
     </div>
   } @else if (technology()) {
     <div class="flex items-center gap-4 shrink-0 h-8 px-3">
-      <button (click)="nav.goBack()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">← {{ nav.backLabel() }}</button>
+      <button (click)="nav.goBack()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">← Zurück</button>
       <div class="w-px h-5 bg-gray-300"></div>
       <p class="text-xs font-medium px-2 py-1 rounded-2xl text-white" [style.background]="field()!.style.color">
         {{ field()!.label }} → {{ technology()!.label }}

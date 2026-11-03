@@ -8,6 +8,7 @@ import { organisationColor, organisationTypeName } from '@shared/models/network.
 import { Icon } from '../../../ui/icon/icon';
 import { HitRow } from '../hit-row/hit-row';
 import { Spinner } from '@ui/spinner/spinner';
+import { originState } from '@shared/navigation/origin';
 
 interface Target {
   kind: 'organisation' | 'project';
@@ -101,9 +102,7 @@ export class Search {
   readonly activeId = computed(() => this.targets()[this.active()]?.id ?? null);
 
   open(kind: Target['kind'], id: string): void {
-    this.router.navigate([`/${kind}`, id], {
-      queryParams: { from: this.backUrl(), fromLabel: 'Zurück zur Suche' },
-    });
+    this.router.navigate([`/${kind}`, id], originState(this.backUrl(), 'Zurück zur Suche'));
   }
 
   private backUrl(): string {

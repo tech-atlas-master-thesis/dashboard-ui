@@ -1,14 +1,31 @@
 import { Signal, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { ActivatedRoute, Event as RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-export interface Handover {
-  from: string;
-  fromLabel: string;
+export interface OriginRef {
+  url: string;
+  label: string;
 }
 
-export function handoverTo(router: Router, label: string): Handover {
-  return { from: router.url, fromLabel: label };
+export function originState(url: string, label: string): { state: { origin: OriginRef } } {
+  return { state: { origin: { url, label } } };
+}
+
+interface Known {
+  url: string | null;
+  label: string | null;
+  inHistory: boolean;
+}
+
+function read(location: Location, route: ActivatedRoute): Known {
+  const state = location.getState() as { origin?: OriginRef } | null;
+  if (state?.origin?.url) {
+    return { url: state.origin.url, label: state.origin.label ?? null, inHistory: true };
+  }
+
+  const params = route.snapshot.queryParamMap;
+  return { url: params.get('from'), label: params.get('fromLabel'), inHistory: false };
 }
 
 export interface OriginConfig {
@@ -20,16 +37,18 @@ export interface OriginConfig {
 export interface Origin {
   readonly backLabel: Signal<string>;
   goBack(): void;
-  handover(label?: string): Handover;
+  handover(label?: string): { state: { origin: OriginRef } };
 }
 
 export function useOrigin(config: OriginConfig = {}): Origin {
   const route = inject(ActivatedRoute);
   const router = inject(Router);
+  const location = inject(Location);
+  const origin = signal(read(location, route));
 
-  const origin = signal<{ url: string | null; label: string | null }>({ url: null, label: null });
-
-  route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params: ParamMap) => origin.set({ url: params.get('from'), label: params.get('fromLabel') }));
+  router.events.pipe(takeUntilDestroyed()).subscribe((event: RouterEvent) => {
+    if (event instanceof NavigationEnd) origin.set(read(location, route));
+  });
 
   const backLabel = computed(() => origin().label ?? config.fallbackLabel ?? 'Zurück zur Übersicht');
 
@@ -37,7 +56,13 @@ export function useOrigin(config: OriginConfig = {}): Origin {
     backLabel,
 
     goBack(): void {
-      const url = origin().url;
+      const { url, inHistory } = origin();
+
+      if (inHistory) {
+        location.back();
+        return;
+      }
+
       if (url) {
         router.navigateByUrl(url);
         return;
@@ -49,8 +74,8 @@ export function useOrigin(config: OriginConfig = {}): Origin {
       router.navigate(['/key-technologies']);
     },
 
-    handover(label?: string): Handover {
-      return handoverTo(router, label ?? `Zurück zu ${config.title?.() || 'Übersicht'}`);
+    handover(label?: string) {
+      return originState(router.url, label ?? `Zurück zu ${config.title?.() || 'Übersicht'}`);
     },
   };
 }

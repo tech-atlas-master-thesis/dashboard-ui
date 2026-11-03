@@ -10,6 +10,7 @@ import { OrganisationPreview } from '../../features/previews/organisation-previe
 import { ProjectPreview } from '../../features/previews/project-preview/project-preview';
 import { Spinner } from '../../ui/spinner/spinner';
 import { useOrigin } from '@shared/navigation/origin';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-key-technology-detail',
@@ -43,18 +44,24 @@ export class KeyTechnologyDetail {
       }),
   });
 
+  private readonly params = toSignal(this.route.paramMap);
+
   constructor() {
     effect(() => {
       const fields = this.service.data.value() as TechnologyField[] | undefined;
-      const id = this.route.snapshot.paramMap.get('id');
-      if (fields && id) {
-        for (const f of fields) {
-          const tech = f.technologies.find((t) => t.short === id || t.label === id);
-          if (tech) {
-            this.technology.set(tech);
-            this.field.set(f);
-            break;
-          }
+      const params = this.params();
+      const id = params?.get('id');
+      if (!fields || !id) return;
+
+      const fieldId = params?.get('field');
+      const preferred = fieldId ? fields.filter((f) => f._id.$oid === fieldId) : [];
+
+      for (const f of [...preferred, ...fields]) {
+        const tech = f.technologies.find((t) => t.short === id);
+        if (tech) {
+          this.technology.set(tech);
+          this.field.set(f);
+          return;
         }
       }
     });
@@ -76,10 +83,10 @@ export class KeyTechnologyDetail {
   }
 
   openOrganisation(id: string): void {
-    this.router.navigate(['/organisation', id], { queryParams: this.nav.handover() });
+    this.router.navigate(['/organisation', id], this.nav.handover());
   }
 
   openProject(id: string): void {
-    this.router.navigate(['/project', id], { queryParams: this.nav.handover() });
+    this.router.navigate(['/project', id], this.nav.handover());
   }
 }
