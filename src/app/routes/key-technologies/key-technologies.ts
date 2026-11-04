@@ -14,13 +14,16 @@ import { Search } from '../../features/search/search/search';
 import { Spinner } from '../../ui/spinner/spinner';
 import { Toggle, ToggleOption } from '../../ui/toggle/toggle';
 import { PageHead } from '../../ui/page-head/page-head';
+import { FieldIcon } from '../../ui/field-icon/field-icon';
 import { originState } from '@shared/navigation/origin';
+import { isLightColor } from '@shared/utils/color.utils';
 
 type Mode = 'technologies' | 'network';
 type FieldMode = 'tiles' | 'metrics' | 'search';
 
 interface TileItem {
   id: string;
+  iconName: string;
   label: string;
   projects: number;
   color: string;
@@ -48,18 +51,9 @@ interface Tile extends TileItem {
 
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
-function isLight(hex: string): boolean {
-  const value = hex.replace('#', '');
-  if (value.length !== 6) return false;
-
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16) / 255);
-  const channel = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b) > 0.45;
-}
-
 @Component({
   selector: 'app-key-technologies',
-  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Metrics, Search, Spinner, Toggle, PageHead],
+  imports: [Network, NetworkFilter, OrganisationPreview, ProjectPreview, Metrics, Search, Spinner, Toggle, PageHead, FieldIcon],
   templateUrl: './key-technologies.html',
   styleUrls: ['./key-technologies.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,6 +93,7 @@ export class KeyTechnologies {
     if (field) {
       return field.technologies.map((t: KeyTechnology) => ({
         id: t.short || t.label,
+        iconName: '',
         label: t.label,
         projects: t.projects,
         color: field.style.color,
@@ -108,6 +103,7 @@ export class KeyTechnologies {
 
     return (this.keyTechnologyService.data.value() ?? []).map((f) => ({
       id: f._id.$oid,
+      iconName: f.short ?? '',
       label: f.label,
       projects: f.projects,
       color: f.style.color,
@@ -126,7 +122,7 @@ export class KeyTechnologies {
     const withIcons = !this.selectedField();
 
     const root = d3
-      .hierarchy<TileItem>({ id: 'root', label: 'root', projects: 0, color: '', accent: '', children: items })
+      .hierarchy<TileItem>({ id: 'root', iconName: '', label: 'root', projects: 0, color: '', accent: '', children: items })
       .sum((d) => (d.children ? 0 : Math.max(Math.sqrt(d.projects || 1), 3)))
       .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
@@ -149,12 +145,12 @@ export class KeyTechnologies {
         y: node.y0,
         w,
         h,
-        light: isLight(node.data.color),
+        light: isLightColor(node.data.color),
         pad,
         labelSize,
         countSize,
         lines: lines as 1 | 2 | 3,
-        icon: withIcons && h >= 112 && w >= 150,
+        icon: withIcons && !!node.data.iconName && h >= 112 && w >= 150,
         showBar: h >= 46 && w >= 112,
         showShare: w >= 150 && h >= 40,
       };

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, output, signal } 
 import { AnalysisService } from '@shared/services/analysis-service';
 import { FieldMetricsRow } from '@shared/models/analysis.model';
 import { Spinner } from '../../ui/spinner/spinner';
+import { FieldIcon } from '../../ui/field-icon/field-icon';
+import { inkOn } from '@shared/utils/color.utils';
 
 type SortKey =
   | 'label'
@@ -23,7 +25,7 @@ interface MetricColumn {
 
 @Component({
   selector: 'app-metrics',
-  imports: [Spinner],
+  imports: [Spinner, FieldIcon],
   templateUrl: './metrics.html',
   styleUrl: './metrics.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,6 +130,14 @@ export class Metrics {
 
   openField(row: FieldMetricsRow): void {
     this.fieldSelected.emit(row._id);
+  }
+
+  icon(row: FieldMetricsRow): string {
+    return row.short ?? '';
+  }
+
+  ink(color: string): string {
+    return inkOn(color);
   }
 
   int(n: number): string {
