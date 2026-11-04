@@ -1,7 +1,7 @@
 import { inject, Injectable, linkedSignal } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { DatasetApi } from '@shared/services/dataset.api';
-import { DataSetModel } from '@shared/models/data-set.model';
+import { DataSetModel } from '@shared/models/datasets.model';
 
 @Injectable({
   providedIn: 'root',
