@@ -23,6 +23,7 @@ type FieldMode = 'tiles' | 'metrics' | 'search';
 
 interface TileItem {
   id: string;
+  /** Schlüssel für app-field-icon; bei Technologien leer */
   iconName: string;
   label: string;
   projects: number;
@@ -102,7 +103,7 @@ export class KeyTechnologies {
     }
 
     return (this.keyTechnologyService.data.value() ?? []).map((f) => ({
-      id: f._id.$oid,
+      id: f.short || f._id.$oid,
       iconName: f.short ?? '',
       label: f.label,
       projects: f.projects,
@@ -169,8 +170,8 @@ export class KeyTechnologies {
 
       untracked(() => {
         const params = this.route.snapshot.queryParamMap;
-        const fieldID = params.get('field');
-        const field = fieldID ? (fields.find((f) => f._id.$oid === fieldID) ?? null) : null;
+        const key = params.get('field');
+        const field = key ? (fields.find((f) => f.short === key || f._id.$oid === key) ?? null) : null;
 
         const view = params.get('view');
         this.fieldMode.set(view === 'metrics' || view === 'search' ? view : 'tiles');
@@ -219,8 +220,8 @@ export class KeyTechnologies {
     this.syncQueryParams();
   }
 
-  onFieldSelected(id: string): void {
-    const field = (this.keyTechnologyService.data.value() ?? []).find((f) => f._id.$oid === id);
+  onFieldSelected(key: string): void {
+    const field = (this.keyTechnologyService.data.value() ?? []).find((f) => f.short === key || f._id.$oid === key);
     if (!field) return;
 
     this.mode.set('technologies');
@@ -235,7 +236,7 @@ export class KeyTechnologies {
       return;
     }
 
-    this.router.navigate(['/key-technologies', field._id.$oid, entry.id], {
+    this.router.navigate(['/key-technologies', field.short || field._id.$oid, entry.id], {
       queryParams: { view: this.fieldMode() === 'tiles' ? null : this.fieldMode() },
     });
   }
@@ -246,7 +247,7 @@ export class KeyTechnologies {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
-        field: field?._id.$oid ?? null,
+        field: field ? (field.short ?? field._id.$oid) : null,
         mode: field && this.mode() === 'network' ? 'network' : null,
         view: this.fieldMode() === 'tiles' ? null : this.fieldMode(),
       },

@@ -39,7 +39,7 @@ export class KeyTechnologyDetail {
     home: () =>
       this.router.navigate(['/key-technologies'], {
         queryParams: {
-          field: this.field()?._id.$oid ?? null,
+          field: this.field()?.short ?? this.field()?._id.$oid ?? null,
           view: this.route.snapshot.queryParamMap.get('view'),
         },
       }),
@@ -54,8 +54,9 @@ export class KeyTechnologyDetail {
       const id = params?.get('id');
       if (!fields || !id) return;
 
-      const fieldId = params?.get('field');
-      const preferred = fieldId ? fields.filter((f) => f._id.$oid === fieldId) : [];
+      // Im Pfad steht der Short des Felds; alte Links mit der Id funktionieren weiter
+      const fieldKey = params?.get('field');
+      const preferred = fieldKey ? fields.filter((f) => f.short === fieldKey || f._id.$oid === fieldKey) : [];
 
       for (const f of [...preferred, ...fields]) {
         const tech = f.technologies.find((t) => t.short === id);
