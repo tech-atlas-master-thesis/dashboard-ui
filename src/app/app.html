@@ -1,6 +1,7 @@
-<div class="h-screen flex flex-col">
-  <app-header />
-  <main class="flex-1 overflow-hidden">
+<div class="print-page h-screen flex flex-col">
+  <app-print-header />
+  <app-header class="no-print" />
+  <main class="print-flow flex-1 overflow-hidden">
     <router-outlet />
   </main>
 </div>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-export type IconName = 'chevron' | 'close' | 'search' | 'reset';
+export type IconName = 'chevron' | 'close' | 'search' | 'reset' | 'print';
 
 @Component({
   selector: 'app-icon',
@@ -20,6 +20,7 @@ export type IconName = 'chevron' | 'close' | 'search' | 'reset';
       stroke="currentColor"
       [attr.stroke-width]="weight()"
       stroke-linecap="round"
+      stroke-linejoin="round"
       aria-hidden="true"
     >
       @switch (name()) {
@@ -37,6 +38,11 @@ export type IconName = 'chevron' | 'close' | 'search' | 'reset';
         @case ('reset') {
           <svg:path d="M20 11a8 8 0 1 0-2.3 6" />
           <svg:polyline points="20,4 20,11 13,11" />
+        }
+        @case ('print') {
+          <svg:polyline points="7,9 7,3 17,3 17,9" />
+          <svg:path d="M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+          <svg:rect x="7" y="14" width="10" height="7" rx="1" />
         }
       }
     </svg>

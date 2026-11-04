@@ -1,4 +1,4 @@
-<div class="flex h-full w-full flex-col gap-3 px-10 py-3">
+<div class="print-page flex h-full w-full flex-col gap-3 px-10 py-3">
   @if (keyTechnologyService.data.isLoading()) {
     <div class="flex flex-1 flex-col items-center justify-center gap-4">
       <app-spinner size="lg" />
@@ -15,7 +15,6 @@
         >
         </app-network-filter>
       }
-
       @if (selectedField()) {
         <app-toggle [options]="modes" [value]="mode()" (changed)="setMode($event)" />
       } @else {
@@ -24,7 +23,7 @@
     </app-page-head>
 
     @if (showMetrics()) {
-      <div class="min-h-0 w-full flex-1">
+      <div class="print-flow min-h-0 w-full flex-1">
         <app-metrics (fieldSelected)="onFieldSelected($event)"></app-metrics>
       </div>
     } @else if (showSearch()) {
@@ -62,7 +61,7 @@
         }
       </div>
     } @else {
-      <div #chart class="relative min-h-0 w-full flex-1">
+      <div #chart class="print-chart relative min-h-0 w-full flex-1">
         @for (tile of tiles(); track tile.id) {
           <button
             type="button"

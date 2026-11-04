@@ -1,4 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, signal, untracked, viewChild } from '@angular/core';
+import {
+  ApplicationRef,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import * as d3 from 'd3';
 import { KeyTechnologyService } from '@shared/services/key-technologies-service';
 import { NetworkService } from '@shared/services/network-service';
@@ -23,7 +35,6 @@ type FieldMode = 'tiles' | 'metrics' | 'search';
 
 interface TileItem {
   id: string;
-  /** Schlüssel für app-field-icon; bei Technologien leer */
   iconName: string;
   label: string;
   projects: number;
@@ -51,6 +62,8 @@ interface Tile extends TileItem {
 }
 
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
+
+const PRINT_BOX = { width: 1032, height: 567 };
 
 @Component({
   selector: 'app-key-technologies',
@@ -87,6 +100,8 @@ export class KeyTechnologies {
 
   private readonly chart = viewChild<ElementRef<HTMLDivElement>>('chart');
   private readonly size = signal({ width: 0, height: 0 });
+  private readonly printSize = signal<{ width: number; height: number } | null>(null);
+  private readonly appRef = inject(ApplicationRef);
 
   private readonly items = computed<TileItem[]>(() => {
     const field = this.selectedField();
@@ -113,7 +128,7 @@ export class KeyTechnologies {
   });
 
   readonly tiles = computed<Tile[]>(() => {
-    const { width, height } = this.size();
+    const { width, height } = this.printSize() ?? this.size();
     const items = this.items();
     if (!width || !height || !items.length) return [];
 
@@ -195,6 +210,22 @@ export class KeyTechnologies {
 
       observer.observe(el);
       onCleanup(() => observer.disconnect());
+    });
+
+    const beforePrint = () => {
+      this.printSize.set(PRINT_BOX);
+      this.appRef.tick();
+    };
+    const afterPrint = () => {
+      this.printSize.set(null);
+      this.appRef.tick();
+    };
+
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint', afterPrint);
     });
   }
 

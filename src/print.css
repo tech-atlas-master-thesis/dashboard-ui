@@ -1,0 +1,128 @@
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm 12mm 14mm;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: revert !important;
+  }
+
+  .print-page {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-flow {
+    display: block !important;
+    flex: none !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-page > * + *,
+  .print-flow > * + * {
+    margin-top: 6mm;
+  }
+
+  .print-stack {
+    align-items: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .print-stack > * {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .print-page .truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  .print-page .tabular-nums {
+    white-space: nowrap !important;
+  }
+
+  .print-page .h-5 {
+    height: auto !important;
+    min-height: 1.25rem;
+  }
+
+  .print-keep {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-break {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print-break {
+    margin-top: 0 !important;
+  }
+
+  .print-expand > * {
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+  }
+
+  .print-chart {
+    height: 150mm !important;
+  }
+
+  details::details-content {
+    content-visibility: visible !important;
+    block-size: auto !important;
+  }
+
+  details > summary {
+    list-style: none;
+    font-weight: 600;
+  }
+
+  .print-tight {
+    min-width: 0 !important;
+  }
+
+  .print-tight .w-30 {
+    width: 5.5rem !important;
+  }
+
+  .print-tight .min-w-65 {
+    min-width: 0 !important;
+  }
+
+  .sticky {
+    position: static !important;
+  }
+}

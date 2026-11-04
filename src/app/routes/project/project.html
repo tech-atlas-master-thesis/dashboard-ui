@@ -1,15 +1,17 @@
-<div class="h-full w-full py-5 px-10 flex flex-col gap-2">
+<div class="print-page h-full w-full py-5 px-10 flex flex-col gap-2">
   @if (service.data.isLoading()) {
     <div class="flex-1 flex flex-col items-center justify-center gap-4">
       <app-spinner size="lg" />
       <p class="text-gray-400 font-light text-sm">Projekt wird geladen ...</p>
     </div>
   } @else if (project(); as p) {
-    <div class="flex-1 min-h-0 flex flex-col gap-6 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div class="print-flow flex-1 min-h-0 flex flex-col gap-6 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div class="shrink-0 flex flex-col gap-3 items-start">
-        <button type="button" (click)="nav.goBack()" class="text-xs text-gray-400 hover:text-gray-900 cursor-pointer">← {{ nav.backLabel() }}</button>
+        <div class="no-print flex w-full items-center justify-between gap-4">
+          <button type="button" (click)="nav.goBack()" class="text-xs text-gray-500 hover:text-gray-900 cursor-pointer">← {{ nav.backLabel() }}</button>
+        </div>
 
-        <div class="flex items-start justify-between border-l-4 p-4 rounded-2xl" [style.border-color]="projectColor">
+        <div class="print-keep flex items-start justify-between border-l-4 p-4 rounded-2xl" [style.border-color]="projectColor">
           <div class="flex flex-col gap-2">
             <h1 class="text-2xl font-semibold tracking-tight">{{ p.title ?? 'Ohne Titel' }}</h1>
             <div class="flex items-center gap-2">
@@ -35,7 +37,7 @@
       </div>
 
       @if (metrics(); as m) {
-        <div class="shrink-0 grid grid-cols-4 gap-2">
+        <div class="print-keep shrink-0 grid grid-cols-4 gap-2">
           <app-stat-card label="Beteiligte" [value]="int(m.participants)" [accent]="projectColor" />
           <app-stat-card label="Kooperationen" [value]="int(m.cooperations)" [accent]="projectColor" />
           <app-stat-card label="Technologiefelder" [value]="int(technologyFields().length)" [accent]="projectColor" />
@@ -44,28 +46,28 @@
       }
 
       @if (hasAbstract()) {
-        <app-section title="Kurzbeschreibung" class="shrink-0">
-          @if (abstractOpen()) {
-            <div class="flex flex-col gap-3">
-              @for (paragraph of paragraphs(); track $index) {
-                <p class="text-sm text-gray-800">{{ paragraph }}</p>
-              }
-            </div>
-          } @else {
-            <p class="text-sm text-gray-800 line-clamp-3">{{ paragraphs()[0] }}</p>
-          }
+        <app-section title="Kurzbeschreibung" class="print-keep shrink-0">
+          <div class="flex flex-col gap-3" [class.print-expand]="!abstractOpen()">
+            @for (paragraph of paragraphs(); track $index) {
+              <p class="text-sm text-gray-800" [class.hidden]="!abstractOpen() && !$first" [class.line-clamp-3]="!abstractOpen() && $first">{{ paragraph }}</p>
+            }
+          </div>
 
           @if (abstractTruncated()) {
-            <button type="button" (click)="toggleAbstract()" class="self-start text-xs text-gray-500 hover:text-gray-900 hover:underline cursor-pointer">
+            <button
+              type="button"
+              (click)="toggleAbstract()"
+              class="no-print self-start text-xs text-gray-500 hover:text-gray-900 hover:underline cursor-pointer"
+            >
               {{ abstractOpen() ? 'Weniger anzeigen' : 'Ganze Beschreibung anzeigen' }}
             </button>
           }
         </app-section>
       }
 
-      <div class="flex gap-10 flex-1 min-h-0">
+      <div class="print-stack flex gap-10 flex-1 min-h-0">
         <div class="w-4/7 min-w-0 shrink-0 flex flex-col gap-10">
-          <app-section title="Zusammensetzung des Konsortiums">
+          <app-section class="print-keep" title="Zusammensetzung des Konsortiums">
             <div class="flex h-6 rounded-xl overflow-hidden">
               @for (t of typeMix(); track t.type) {
                 <span class="block" [style.width.%]="t.share" [style.background]="t.color" [title]="t.name"></span>
@@ -85,7 +87,8 @@
             }
           </app-section>
 
-          <div class="flex flex-col">
+          <!-- Eigene Seite im Druck, damit die Liste mit ihrer Spaltenüberschrift zusammenbleibt -->
+          <div class="print-break print-keep flex flex-col">
             <div class="flex items-center gap-3 pb-1.5 border-b border-gray-200 text-xs text-gray-500">
               <p class="w-1/3">Organisation</p>
               <p class="w-1/3">Typ</p>
@@ -114,7 +117,7 @@
         </div>
 
         <div class="flex-1 min-w-0 flex flex-col gap-5">
-          <app-section title="Technologiezuordnung" layout="loose">
+          <app-section class="print-keep" title="Technologiezuordnung" layout="loose">
             @for (group of technologyFields(); track group._id) {
               <div class="flex flex-col gap-2 rounded-xl p-2" [style.background]="group.style?.color ?? '#d1d5db'">
                 <button type="button" (click)="openField(group)" class="text-white text-xs font-medium text-left cursor-pointer hover:underline">
@@ -139,7 +142,7 @@
             }
           </app-section>
 
-          <app-section title="Dieses Konsortium arbeitet auch hier" aside="gemeinsame Partner">
+          <app-section class="print-keep" title="Dieses Konsortium arbeitet auch hier" aside="gemeinsame Partner">
             @for (row of recurring(); track row._id) {
               <button type="button" (click)="openProject(row)" class="flex items-center gap-2 h-5 text-left cursor-pointer hover:underline">
                 <p class="flex-1 min-w-0 text-xs truncate">{{ shortLabel(row) }}</p>
@@ -152,7 +155,7 @@
           </app-section>
 
           @if (keywords().length) {
-            <app-section title="Schlagworte" layout="wrap">
+            <app-section class="print-keep" title="Schlagworte" layout="wrap">
               @for (keyword of keywords(); track $index) {
                 <p class="text-xs bg-gray-100 rounded px-2 py-0.5 text-gray-600">{{ keyword }}</p>
               }
