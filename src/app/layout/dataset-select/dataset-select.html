@@ -9,17 +9,17 @@
   </button>
 
   @if (open()) {
-    <div class="absolute top-10 right-0 z-50 w-150 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+    <div class="absolute top-10 right-0 z-50 w-150 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
       <div class="grid grid-cols-2">
         <div class="border-r border-gray-100 p-3">
-          <p class="mb-2 text-xs text-gray-900">Pipeline</p>
+          <p class="mb-2 text-xs text-gray-900 px-2">Pipeline</p>
 
           @for (pipeline of datasetState.pipelines.value(); track pipeline) {
             <button
               type="button"
               (click)="pickPipeline(pipeline)"
               [class]="pipeline === datasetState.selectedPipeline() ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'"
-              class="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-xs"
+              class="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-2xl px-2.5 text-left text-xs"
             >
               <p class="min-w-0 flex-1 truncate">{{ pipeline }}</p>
             </button>
@@ -29,7 +29,7 @@
         </div>
 
         <div class="p-3">
-          <p class="mb-2 text-xs text-gray-900">Datensatz</p>
+          <p class="mb-2 text-xs text-gray-900 px-2">Datensatz</p>
 
           @for (dataset of datasets(); track dataset._id; let first = $first) {
             <button
@@ -38,7 +38,7 @@
               (mouseenter)="peeked.set(dataset._id)"
               (mouseleave)="peeked.set(null)"
               [class]="dataset._id === datasetState.selectedDataset() ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'"
-              class="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-xs"
+              class="flex h-8.5 w-full cursor-pointer items-center gap-2.5 rounded-2xl px-2.5 text-left text-xs"
             >
               <p class="min-w-0 flex-1 truncate tabular-nums">{{ dataset.created.at | date: 'dd.MM.yyyy HH:mm' }}</p>
             </button>
