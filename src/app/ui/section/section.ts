@@ -40,5 +40,5 @@ export class Section {
   readonly aside = input('');
   readonly layout = input<SectionLayout>('stack');
 
-  protected readonly body = computed(() => `border-gray-100 border-t pt-2 ${LAYOUT[this.layout()]}`);
+  protected readonly body = computed(() => `border-gray-200 border-t pt-2 ${LAYOUT[this.layout()]}`);
 }

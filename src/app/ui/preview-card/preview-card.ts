@@ -11,7 +11,7 @@ import { Icon } from '../icon/icon';
     }
   `,
   template: `
-    <div class="backdrop-blur-sm rounded-xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border" [style.border-color]="accent()">
+    <div class="backdrop-blur-sm rounded-2xl shadow-lg p-4 flex flex-col gap-2 border-l-4 border" [style.border-color]="accent()">
       <div class="flex justify-between gap-2">
         <p class="text-sm font-medium">{{ title() }}</p>
         <button type="button" (click)="closed.emit()" title="Schließen" class="text-gray-500 hover:text-gray-700 cursor-pointer flex items-center">

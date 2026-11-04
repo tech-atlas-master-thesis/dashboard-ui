@@ -9,7 +9,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     }
   `,
   template: `
-    <div class="border rounded-xl p-4 flex flex-col gap-1 shadow-lg backdrop-blur-sm" [style.border-color]="accent()">
+    <div class="rounded-2xl py-2 px-4 flex flex-col gap-1 border" [style.border-color]="accent()">
       <p class="text-xs text-gray-500">{{ label() }}</p>
       <p class="text-xl font-medium tabular-nums">{{ value() }}</p>
     </div>
