@@ -49,8 +49,7 @@ export class Network implements OnDestroy {
   private links: NetworkLink[] = [];
   private byId = new Map<string, NetworkNode>();
   private neighbors = new Map<string, Set<string>>();
-  private orgLabelMin = 0;
-  private projectLabelMin = 0;
+  private labelled = new Set<string>();
 
   private expandedBundles = new Set<string>();
   private selectedMember: string | null = null;
@@ -84,6 +83,10 @@ export class Network implements OnDestroy {
   private readonly componentGap = 16;
   private readonly projectColor = '#475569';
   private readonly leadColor = '#1e293b';
+
+  private readonly labelMinCount = 2;
+  private readonly labelMin = 3;
+  private readonly labelMax = 10;
 
   private readonly bandPad = 14;
   private readonly bandCaption = 22;
@@ -371,11 +374,6 @@ export class Network implements OnDestroy {
       this.neighbors.get(l.target.id)!.add(l.source.id);
     });
 
-    const topOrgs = activeOrgs.map((n) => n.count).sort((a, b) => b - a);
-    const topProjects = projectNodes.map((n) => n.count).sort((a, b) => b - a);
-    this.orgLabelMin = topOrgs[Math.min(9, topOrgs.length - 1)] ?? 0;
-    this.projectLabelMin = topProjects[Math.min(7, topProjects.length - 1)] ?? 0;
-
     this.selected.set(null);
   }
 
@@ -409,6 +407,24 @@ export class Network implements OnDestroy {
       n.fx = n.x;
       n.fy = n.y;
     });
+
+    this.chooseLabels();
+  }
+
+  private chooseLabels(): void {
+    const inCore = this.nodes.filter((n) => !n.fringe);
+
+    this.labelled = new Set([...this.topFew(inCore.filter((n) => n.nodeType === 'org')), ...this.topFew(inCore.filter((n) => n.nodeType === 'project'))]);
+  }
+
+  private topFew(nodes: NetworkNode[]): string[] {
+    const limit = Math.min(this.labelMax, Math.max(this.labelMin, Math.round(Math.sqrt(nodes.length))));
+
+    return nodes
+      .filter((n) => n.count >= this.labelMinCount)
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .slice(0, limit)
+      .map((n) => n.id);
   }
 
   private layoutAspect(): number {
@@ -1138,7 +1154,7 @@ export class Network implements OnDestroy {
   private labelVisible(d: NetworkNode): boolean {
     if (d.nodeType === 'bundle') return true;
     if (d.fringe) return false;
-    return d.nodeType === 'project' ? d.count >= this.projectLabelMin : d.count >= this.orgLabelMin;
+    return this.labelled.has(d.id);
   }
 
   private egoSet(d: NetworkNode): Set<string> {
