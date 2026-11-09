@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-export type IconName = 'chevron' | 'close' | 'search' | 'reset' | 'print';
+export type IconName = 'chevron' | 'close' | 'search' | 'reset' | 'print' | 'info';
 
 @Component({
   selector: 'app-icon',
@@ -43,6 +43,10 @@ export type IconName = 'chevron' | 'close' | 'search' | 'reset' | 'print';
           <svg:polyline points="7,9 7,3 17,3 17,9" />
           <svg:path d="M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
           <svg:rect x="7" y="14" width="10" height="7" rx="1" />
+        }
+        @case ('info') {
+          <svg:line x1="13.2" y1="5.6" x2="13.2" y2="5.5" />
+          <svg:line x1="12.3" y1="10" x2="10.5" y2="18.5" />
         }
       }
     </svg>

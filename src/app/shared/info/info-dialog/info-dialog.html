@@ -1,0 +1,255 @@
+@if (info.open()) {
+  <div class="no-print fixed inset-0 z-100 flex items-center justify-center bg-gray-900/25 px-6 py-8" role="dialog" aria-modal="true">
+    <div appClickOutside (clickedOutside)="info.hide()" class="flex h-170 max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+      <div class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-6 py-4">
+        <h2 class="text-md font-semibold text-gray-900">Informationen</h2>
+        <button
+          type="button"
+          (click)="info.hide()"
+          title="Schließen"
+          aria-label="Schließen"
+          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-900"
+        >
+          <app-icon name="close" [size]="13" [weight]="2" />
+        </button>
+      </div>
+
+      <div class="shrink-0 px-6 py-3">
+        <app-toggle [options]="tabs" [value]="info.tab()" (changed)="info.setTab($event)" />
+      </div>
+
+      <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        @switch (info.tab()) {
+          @case ('erklaerung') {
+            <div class="flex flex-col gap-5">
+              <div class="flex flex-col gap-3">
+                <p class="text-sm font-semibold text-gray-900">Erklärung</p>
+                <p class="text-xs leading-relaxed text-gray-600">
+                  Der Austrian TechAtlas zeigt, wer in Österreich gemeinsam an öffentlich geförderten Forschungsprojekten arbeitet. Die Projekte sind den
+                  Schlüsseltechnologien der Industriestrategie 2035 zugeordnet: Von der Übersicht eines Technologiefeldes führt der Weg über seine Teilbereiche
+                  bis zu einzelnen Organisationen, Projekten und deren Kooperationsnetzwerk. Dargestellt werden ausschließlich die in den Förderdaten
+                  dokumentierten Beteiligungen — es handelt sich um keine Bewertung und kein Ranking.
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-3">
+                <p class="text-sm font-semibold text-gray-900">So liest sich das Netzwerk</p>
+
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <span class="flex items-center gap-2 text-xs text-gray-600">
+                    <span class="h-3 w-3 rounded-full bg-gray-400"></span>
+                    Organisation
+                  </span>
+                  <span class="flex items-center gap-2 text-xs text-gray-600">
+                    <span class="h-3 w-3" [style.background]="projectColor"></span>
+                    Projekt
+                  </span>
+                  <span class="flex items-center gap-2 text-xs text-gray-600">
+                    <span class="h-0.5 w-6 bg-slate-500"></span>
+                    Beteiligung
+                  </span>
+                  <span class="flex items-center gap-2 text-xs text-gray-600">
+                    <span class="h-1 w-6 bg-slate-700"></span>
+                    Projektleitung
+                  </span>
+                </div>
+
+                <p class="text-xs leading-relaxed text-gray-600">
+                  Jeder Kreis ist eine Organisation, jedes Quadrat ein Projekt. Eine Linie bedeutet, dass die Organisation an diesem Projekt beteiligt ist —
+                  zwei Organisationen sind daher nie direkt verbunden, sondern immer über ein gemeinsames Projekt. Die kräftigere, dunkle Linie markiert die
+                  Projektleitung. Die Größe eines Knotens richtet sich nach seinem Umfang: bei Organisationen nach der Anzahl ihrer Projekte, bei Projekten nach
+                  der Anzahl der Partner.
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-3">
+                <p class="text-xs leading-relaxed text-gray-600">Die Farbe steht für die Art der Organisation:</p>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+                  @for (type of organisationTypes; track type) {
+                    <span class="flex items-center gap-2 text-xs text-gray-600">
+                      <span class="h-3 w-3 shrink-0 rounded-full" [style.background]="color(type)"></span>
+                      <span class="truncate">{{ name(type) }}</span>
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <p class="text-xs leading-relaxed text-gray-600">
+                Graue Symbole mit einer Zahl fassen mehrere Partner zusammen, die sonst das Bild überladen würden (Bündelung), ein Klick öffnet sie. Das Band am
+                unteren Rand sammelt Projekte, die keine Verbindung zum übrigen Netz haben.
+              </p>
+            </div>
+          }
+
+          @case ('daten') {
+            <div class="flex flex-col gap-4">
+              <p class="text-sm font-semibold text-gray-900">Datenherkunft</p>
+              <ul class="flex list-disc flex-col gap-2 pl-5 text-xs leading-relaxed text-gray-600 marker:text-gray-300">
+                <li>
+                  <span class="font-medium text-gray-900">Projekt- und Organisationsdaten:</span>
+                  FWF Open API
+                  <a
+                    href="https://openapi.fwf.ac.at"
+                    target="_blank"
+                    rel="noopener"
+                    class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >openapi.fwf.ac.at</a
+                  >, lizenziert unter CC0 und FFG-Projektdatenbank
+                  <a href="https://projekte.ffg.at" target="_blank" rel="noopener" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >projekte.ffg.at</a
+                  >
+                </li>
+                <li>
+                  <span class="font-medium text-gray-900">Organisationsidentitäten:</span> Research Organization Registry (ROR)
+                  <a href="https://ror.org/" target="_blank" rel="noopener" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >ror.org</a
+                  >, Zenodo
+                  <a
+                    href="https://zenodo.org/records/17953395"
+                    target="_blank"
+                    rel="noopener"
+                    class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >https://zenodo.org/records/17953395</a
+                  >, CC0
+                </li>
+                <li>
+                  <span class="font-medium text-gray-900">Firmenbuchnummern und Firmenadressen:</span> Global Legal Entity Identifier Foundation (GLEIF)
+                  <a href="https://gleif.org/" target="_blank" rel="noopener" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >gleif.org</a
+                  >, CC0
+                </li>
+                <li>
+                  <span class="font-medium text-gray-900">Adressen und Koordinaten:</span> Adressregister des Bundesamts für Eich- und Vermessungswesen (BEV)
+                  <a href="https://data.bev.gv.at/" target="_blank" rel="noopener" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >data.bev.gv.at</a
+                  >, lizenziert unter CC BY 4.0. Geokodierung mit Photon auf Basis von OpenStreetMap-Daten
+                  <a
+                    href="https://photon.komoot.io/"
+                    target="_blank"
+                    rel="noopener"
+                    class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >photon.komoot.io</a
+                  >, © OpenStreetMap-Mitwirkende, lizenziert unter ODbL
+                </li>
+              </ul>
+
+              <p class="text-xs leading-relaxed text-gray-600">
+                Adressen und Koordinaten werden den Organisationen automatisch zugeordnet. Gibt es keine eindeutige Übereinstimmung, bleibt das Feld leer.
+                Einzelne Angaben können trotzdem ungenau sein. Für die Richtigkeit, Vollständigkeit und Aktualität der Daten wird keine Gewähr übernommen.
+                Hinweise auf Fehler nehmen wir gerne per E-Mail entgegen.
+              </p>
+            </div>
+          }
+
+          @case ('impressum') {
+            <div class="flex flex-col gap-4">
+              <p class="text-sm font-semibold text-gray-900">Impressum</p>
+
+              <p class="text-xs leading-relaxed text-gray-600">
+                Der Austrian TechAtlas entstand im Rahmen der Masterarbeit von Bastian Kandlbauer und Fabian Mooslechner an der Technischen Universität Graz
+                unter der inhaltlichen Begleitung und Qualitätskontrolle von Alexandra Mazak-Huemer (FORWIT – Rat für Forschung, Wissenschaft, Innovation und
+                Technologieentwicklung,
+                <a href="https://forwit.at" target="_blank" rel="noopener" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                  >https://forwit.at</a
+                >).
+              </p>
+
+              <div class="flex flex-col gap-y-4 text-xs leading-relaxed">
+                <div>
+                  <p class="text-gray-500">Alle Rechte</p>
+                  <p class="text-gray-900">Bastian Kandlbauer und Fabian Mooslechner</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">Medieninhaber</p>
+                  <p class="text-gray-900">Bastian Kandlbauer und Fabian Mooslechner</p>
+                </div>
+
+                <div>
+                  <p class="text-gray-500">Kontakt Medieninhaber</p>
+                  <p>
+                    <a
+                      href="mailto:mail&#64;bastiankandlbauer.at"
+                      class="text-gray-900 underline decoration-gray-300 underline-offset-2 hover:decoration-gray-900"
+                      >mail&#64;bastiankandlbauer.at</a
+                    ><br />
+                    <a href="mailto:fabian&#64;mooslechner.dev" class="text-gray-900 underline decoration-gray-300 underline-offset-2 hover:decoration-gray-900"
+                      >fabian&#64;mooslechner.dev</a
+                    >
+                  </p>
+                </div>
+                <div>
+                  <p class="text-gray-500">Kontakt Alexandra Mazak-Huemer / FORWIT</p>
+                  <p>
+                    <a href="mailto:amh&#64;forwit.at" class="text-gray-900 underline decoration-gray-300 underline-offset-2 hover:decoration-gray-900"
+                      >amh&#64;forwit.at</a
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+
+          @case ('datenschutz') {
+            <div class="flex flex-col gap-5">
+              <p class="text-sm font-semibold text-gray-900">Datenschutzerklärung</p>
+
+              <div class="flex flex-col gap-2">
+                <p class="text-xs font-medium text-gray-900">Verantwortliche</p>
+                <p class="text-xs leading-relaxed text-gray-600">
+                  Bastian Kandlbauer und Fabian Mooslechner, Graz<br />
+                  <a href="mailto:mail&#64;bastiankandlbauer.at" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >mail&#64;bastiankandlbauer.at</a
+                  ><br />
+                  <a href="mailto:fabian&#64;mooslechner.dev" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >fabian&#64;mooslechner.dev</a
+                  >
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <p class="text-xs font-medium text-gray-900">Besuch der Website</p>
+                <p class="text-xs leading-relaxed text-gray-600">
+                  Wir verwenden keine Nutzerkonten, kein Tracking und keine Analyse-Werkzeuge. Wir speichern keine Zugriffsprotokolle, und alle Inhalte werden
+                  von unseren eigenen Servern ausgeliefert. Für die Auslieferung und zum Schutz vor Angriffen nutzen wir Cloudflare (Cloudflare, Inc., USA).
+                  Cloudflare verarbeitet dabei Verbindungsdaten wie IP-Adresse, aufgerufene Seite, Browser-Kennung und Zeitpunkt. Cloudflare kann außerdem ein
+                  technisch notwendiges Cookie zur Bot-Erkennung setzen (<span class="font-mono text-[13px]">__cf_bm</span>). Mit Cloudflare besteht ein
+                  Auftragsverarbeitungsvertrag. Übermittlungen in die USA erfolgen auf Grundlage des EU-US Data Privacy Framework und von
+                  EU-Standardvertragsklauseln. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (sicherer und stabiler Betrieb). Mehr dazu:
+                  <a
+                    href="https://www.cloudflare.com/privacypolicy/"
+                    target="_blank"
+                    rel="noopener"
+                    class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >cloudflare.com/privacypolicy</a
+                  >
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <p class="text-xs font-medium text-gray-900">Personenbezogene Daten im Datenbestand</p>
+                <p class="text-xs leading-relaxed text-gray-600">
+                  Der TechAtlas enthält Namen von Wissenschaftler:innen und ihre Zuordnung zu Projekten und Organisationen. Diese Angaben stammen aus den
+                  öffentlich zugänglichen Projektdatenbanken von FFG und FWF. Wir verarbeiten sie ausschließlich, um geförderte Forschungsprojekte zu
+                  wissenschaftlichen Zwecken darzustellen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f in Verbindung mit Art. 89 DSGVO. Die Angaben bleiben
+                  gespeichert, solange sie in den Quelldatenbanken veröffentlicht sind, und werden mit jeder Aktualisierung abgeglichen. Wer betroffen ist, kann
+                  der Verarbeitung jederzeit widersprechen. Wir entfernen die Angaben dann.
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <p class="text-xs font-medium text-gray-900">Ihre Rechte</p>
+                <p class="text-xs leading-relaxed text-gray-600">
+                  Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch (Art. 15–21
+                  DSGVO). Wenden Sie sich dazu an die oben genannten Kontaktadressen. Beschwerden können Sie an die österreichische Datenschutzbehörde richten
+                  (<a href="https://www.dsb.gv.at" target="_blank" rel="noopener" class="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                    >www.dsb.gv.at</a
+                  >).
+                </p>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}
