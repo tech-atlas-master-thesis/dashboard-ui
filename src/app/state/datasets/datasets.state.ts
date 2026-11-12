@@ -17,8 +17,8 @@ export class DatasetsState {
   selectedPipeline = linkedSignal<string[], string>({
     source: () => this.pipelines.value(),
     computation: (pipelines, previous) => {
-      const vorher = previous?.value;
-      if (vorher && pipelines.includes(vorher)) return vorher;
+      const prev = previous?.value;
+      if (prev && pipelines.includes(prev)) return prev;
       return this.getDefaultPipeline(pipelines) ?? '';
     },
   });
@@ -30,8 +30,8 @@ export class DatasetsState {
   selectedDataset = linkedSignal<DataSetModel[], string>({
     source: () => this.datasets.value(),
     computation: (datasets, previous) => {
-      const vorher = previous?.value;
-      if (vorher && datasets.some((d) => d._id === vorher)) return vorher;
+      const prev = previous?.value;
+      if (prev && datasets.some((d) => d._id === prev)) return prev;
       return datasets.at(0)?._id ?? '';
     },
   });
