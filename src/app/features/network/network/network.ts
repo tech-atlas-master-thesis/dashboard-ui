@@ -1259,8 +1259,18 @@ export class Network implements OnDestroy {
 
       const partners = new Set<string>();
       projectIds.forEach((pid) =>
-        (this.neighbors.get(pid) ?? new Set<string>()).forEach((orgId) => {
-          if (orgId !== d.id) partners.add(orgId);
+        (this.neighbors.get(pid) ?? new Set<string>()).forEach((otherId) => {
+          if (otherId === d.id) return;
+
+          const other = this.byId.get(otherId);
+          if (!other) return;
+
+          if (other.nodeType === 'bundle' && other.bundleOf === 'org') {
+            (other.members ?? []).forEach((o) => partners.add(o._id.$oid));
+            return;
+          }
+
+          if (other.nodeType === 'org') partners.add(other.id);
         }),
       );
 
