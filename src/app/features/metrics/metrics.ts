@@ -69,7 +69,7 @@ export class Metrics {
       key: 'projectsWithoutPartnerShare',
       label: 'Einzelprojekte',
       value: (row) => this.pct(row.projectsWithoutPartnerShare, 0),
-      hint: 'Anteil der Projekte mit nur einem Beteiligten. Dort entsteht keine Zusammenarbeit.',
+      hint: 'Anteil der Projekte, bei denen keine Zusammenarbeit entsteht, weil höchstens eine Organisation hinterlegt ist.',
     },
     {
       key: 'componentsFromTwo',
@@ -89,7 +89,7 @@ export class Metrics {
       key: 'academicLeadShare',
       label: 'Wiss. Leitung',
       value: (row) => this.pct(row.academicLeadShare, 0),
-      hint: 'Anteil der Projekte, deren Konsortialführer eine Universität, Fachhochschule oder außeruniversitäre Forschungseinrichtung ist.',
+      hint: 'Anteil der Projekte mit bekannter Leitung, bei denen mindestens eine leitende Organisation eine Universität, Fachhochschule oder außeruniversitäre Forschungseinrichtung ist.',
     },
   ];
 
