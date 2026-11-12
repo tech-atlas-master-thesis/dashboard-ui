@@ -3,10 +3,21 @@
     <div class="flex flex-1 items-center justify-center">
       <app-spinner size="lg" />
     </div>
+  } @else if (service.data.error()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-3">
+      <p class="text-sm text-gray-500">Die Technologiefelder konnten nicht geladen werden.</p>
+      <button
+        type="button"
+        (click)="service.data.reload()"
+        class="flex h-7 cursor-pointer items-center rounded-full border border-gray-300 bg-white px-3 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-900"
+      >
+        Erneut versuchen
+      </button>
+    </div>
   } @else if (technology()) {
     <app-page-head [label]="field()!.label + ' → ' + technology()!.label" [color]="field()!.style.color" (back)="nav.goBack()">
       <app-network-filter
-        [data]="networkService.data.value() ?? null"
+        [data]="networkService.data.value()"
         [filters]="filters()"
         (filtersChange)="filters.set($event)"
         (selectRequested)="selectRequest.set($event)"
@@ -43,6 +54,6 @@
       }
     </div>
   } @else {
-    <div class="flex flex-1 items-center justify-center text-gray-400">Technologie nicht gefunden.</div>
+    <div class="flex flex-1 items-center justify-center text-sm text-gray-500">Technologie nicht gefunden.</div>
   }
 </div>

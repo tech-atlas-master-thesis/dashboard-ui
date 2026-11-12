@@ -1,6 +1,6 @@
 import { inject, Injectable, resource } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { TechnologyField } from '../models/key-technologies.model';
 import environment from '../../environments/environment';
 import { DatasetsState } from '../../state/datasets/datasets.state';
@@ -15,11 +15,14 @@ export class KeyTechnologyService {
   readonly data = resource({
     params: () => this.datasetState.selectedDataset(),
     loader: ({ params }) => {
-      return firstValueFrom(params === '' ? of([]) : this.http.get<TechnologyField[]>(this.getApiUrl(params)));
+      const url = this.getApiUrl(params);
+      return url ? firstValueFrom(this.http.get<TechnologyField[]>(url)) : Promise.resolve([] as TechnologyField[]);
     },
+    defaultValue: [] as TechnologyField[],
   });
 
-  private getApiUrl(dataset: string) {
+  private getApiUrl(dataset: string): string | null {
+    if (!dataset) return null;
     return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/key-technologies`;
   }
 }

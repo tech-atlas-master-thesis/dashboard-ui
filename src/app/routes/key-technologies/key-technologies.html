@@ -4,11 +4,22 @@
       <app-spinner size="lg" />
       <p class="text-sm font-light text-gray-500">Wird geladen ...</p>
     </div>
+  } @else if (keyTechnologyService.data.error()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-3">
+      <p class="text-sm text-gray-500">Die Technologiefelder konnten nicht geladen werden.</p>
+      <button
+        type="button"
+        (click)="keyTechnologyService.data.reload()"
+        class="flex h-7 cursor-pointer items-center rounded-full border border-gray-300 bg-white px-3 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-900"
+      >
+        Erneut versuchen
+      </button>
+    </div>
   } @else {
     <app-page-head [label]="selectedField()?.label ?? ''" [color]="selectedField()?.style?.color ?? ''" (back)="backToFields()">
       @if (showNetwork()) {
         <app-network-filter
-          [data]="networkService.data.value() ?? null"
+          [data]="networkService.data.value()"
           [filters]="filters()"
           (filtersChange)="filters.set($event)"
           (selectRequested)="selectRequest.set($event)"
@@ -112,6 +123,10 @@
               </span>
             </span>
           </button>
+        } @empty {
+          <div class="flex h-full items-center justify-center">
+            <p class="text-sm text-gray-500">Für diesen Datensatz liegen keine Technologiefelder vor.</p>
+          </div>
         }
       </div>
     }

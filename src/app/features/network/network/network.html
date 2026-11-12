@@ -1,8 +1,16 @@
 @if (networkservice.data.isLoading()) {
   <div class="absolute inset-0 flex flex-col items-center justify-center gap-4">
     <app-spinner size="lg" />
-    <p class="text-gray-400 font-light text-sm">Netzwerk wird geladen ...</p>
+    <p class="text-sm font-light text-gray-400">Netzwerk wird geladen ...</p>
+  </div>
+} @else if (networkservice.data.error()) {
+  <div class="absolute inset-0 flex items-center justify-center">
+    <p class="text-sm text-gray-500">Dieser Ausschnitt ist im gewählten Datensatz nicht verfügbar.</p>
+  </div>
+} @else if (!networkservice.data.value().projects.length) {
+  <div class="absolute inset-0 flex items-center justify-center">
+    <p class="text-sm text-gray-500">Für diesen Ausschnitt liegen keine Projekte vor.</p>
   </div>
 } @else {
-  <div id="network" class="w-full h-full"></div>
+  <div id="network" class="h-full w-full"></div>
 }

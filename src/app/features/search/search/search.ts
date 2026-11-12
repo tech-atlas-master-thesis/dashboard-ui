@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { httpResource } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatasetsState } from '../../../state/datasets/datasets.state';
-import { SearchResponse, SearchService } from '@shared/services/search-service';
+import { SearchService } from '@shared/services/search-service';
 import { MIN_SEARCH_LENGTH, SearchHit, createMatcher, toHits } from '@shared/utils/search.utils';
 import { organisationColor, organisationTypeName } from '@shared/models/network.model';
 import { Icon } from '../../../ui/icon/icon';
@@ -24,49 +22,38 @@ interface Target {
 export class Search {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly datasets = inject(DatasetsState);
   private readonly service = inject(SearchService);
-  private readonly initial = this.route.snapshot.queryParamMap.get('q') ?? '';
-  private readonly debounced = signal(this.initial);
   private readonly active = signal(0);
 
   readonly minLength = MIN_SEARCH_LENGTH;
-  readonly term = signal(this.initial);
 
-  private timer: any;
+  readonly term = this.service.term;
+  private readonly settled = this.service.settled;
+
+  constructor() {
+    const initial = this.route.snapshot.queryParamMap.get('q') ?? '';
+    if (initial) this.service.apply(initial);
+  }
 
   setTerm(value: string): void {
-    this.term.set(value);
+    this.service.term.set(value);
     this.active.set(0);
-    clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.debounced.set(value), 200);
   }
 
   clear(): void {
-    clearTimeout(this.timer);
-    this.term.set('');
-    this.debounced.set('');
+    this.service.clear();
     this.active.set(0);
     document.getElementById('dataset-search')?.focus();
   }
 
-  private readonly response = httpResource<SearchResponse>(
-    () => {
-      const matcher = createMatcher(this.debounced());
-      const dataset = this.datasets.selectedDataset();
-      if (!matcher.active || !dataset) return undefined;
-      return this.service.url(dataset, matcher.term);
-    },
-    { defaultValue: { organisations: [], projects: [], term: '' } },
-  );
-
-  readonly loading = computed(() => this.response.isLoading());
-  readonly searching = computed(() => createMatcher(this.debounced()).active);
-  readonly pending = computed(() => this.term().trim() !== this.debounced().trim());
+  readonly loading = computed(() => this.service.data.isLoading());
+  readonly failed = computed(() => !!this.service.data.error());
+  readonly searching = computed(() => createMatcher(this.settled()).active);
+  readonly pending = computed(() => this.term().trim() !== this.settled().trim());
 
   readonly results = computed(() => {
-    const matcher = createMatcher(this.debounced());
-    const data = this.response.value();
+    const matcher = createMatcher(this.settled());
+    const data = this.service.data.value();
 
     const organisations = toHits(data.organisations, matcher, (o) =>
       matcher.matches(o.name)

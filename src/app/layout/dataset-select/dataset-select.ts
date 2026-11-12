@@ -46,8 +46,9 @@ export class DatasetSelect {
   }
 
   toggle(): void {
-    this.open.update((open) => !open);
-    if (!this.open()) this.peeked.set(null);
+    const open = !this.open();
+    this.open.set(open);
+    if (!open) this.peeked.set(null);
   }
 
   close(): void {
@@ -56,15 +57,13 @@ export class DatasetSelect {
   }
 
   pickPipeline(pipeline: string): void {
+    if (pipeline === this.datasetState.selectedPipeline()) return;
+    this.peeked.set(null);
     this.datasetState.selectedPipeline.set(pipeline);
   }
 
   pickDataset(id: string): void {
     this.datasetState.selectedDataset.set(id);
     this.close();
-  }
-
-  countFor(pipeline: string): number {
-    return this.datasets().filter((d) => d.pipeline === pipeline).length;
   }
 }

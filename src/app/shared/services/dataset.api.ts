@@ -5,14 +5,14 @@ import environment from '../../environments/environment';
   providedIn: 'root',
 })
 export class DatasetApi {
-  getPipelinesUrl() {
-    return `${environment.apiUrl}/pipelines`;
+  getPipelinesUrl(): string {
+    return `${environment.baseUrl}${environment.apiUrl}/pipelines`;
   }
 
-  getDataSetsUrl(pipeline: string) {
+  getDataSetsUrl(pipeline: string): string | undefined {
     if (pipeline === '') {
       return undefined;
     }
-    return `${environment.apiUrl}/datasets/${pipeline}`;
+    return `${environment.baseUrl}${environment.apiUrl}/datasets/${encodeURIComponent(pipeline)}`;
   }
 }

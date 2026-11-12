@@ -1,6 +1,6 @@
 import { inject, Injectable, resource } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { FieldAnalysis, emptyAnalysis } from '../models/analysis.model';
 import environment from '../../environments/environment';
 import { DatasetsState } from '../../state/datasets/datasets.state';
@@ -12,9 +12,15 @@ export class AnalysisService {
 
   readonly fields = resource({
     params: () => this.datasetState.selectedDataset(),
-    loader: ({ params }) =>
-      firstValueFrom(
-        params === '' ? of(emptyAnalysis()) : this.http.get<FieldAnalysis>(`${environment.baseUrl}${environment.apiUrl}/data/${params}/analysis/fields`),
-      ),
+    loader: ({ params }) => {
+      const url = this.getApiUrl(params);
+      return url ? firstValueFrom(this.http.get<FieldAnalysis>(url)) : Promise.resolve(emptyAnalysis());
+    },
+    defaultValue: emptyAnalysis(),
   });
+
+  private getApiUrl(dataset: string): string | null {
+    if (!dataset) return null;
+    return `${environment.baseUrl}${environment.apiUrl}/data/${dataset}/analysis/fields`;
+  }
 }

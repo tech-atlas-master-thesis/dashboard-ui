@@ -4,6 +4,18 @@
       <app-spinner size="lg" />
       <p class="text-gray-400 font-light text-sm">Projekt wird geladen ...</p>
     </div>
+  } @else if (service.data.error()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-3">
+      <p class="text-sm text-gray-500">Dieses Projekt konnte nicht geladen werden.</p>
+      <p class="text-xs text-gray-400">Möglicherweise gehört es zu einem anderen Datensatz.</p>
+      <button
+        type="button"
+        (click)="nav.goBack()"
+        class="flex h-7 cursor-pointer items-center rounded-full border border-gray-300 bg-white px-3 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-900"
+      >
+        ← {{ nav.backLabel() }}
+      </button>
+    </div>
   } @else if (project(); as p) {
     <div class="print-flow flex-1 min-h-0 flex flex-col gap-6 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div class="shrink-0 flex flex-col gap-3 items-start">
@@ -87,7 +99,6 @@
             }
           </app-section>
 
-          <!-- Eigene Seite im Druck, damit die Liste mit ihrer Spaltenüberschrift zusammenbleibt -->
           <div class="print-break print-keep flex flex-col">
             <div class="flex items-center gap-3 pb-1.5 border-b border-gray-200 text-xs text-gray-500">
               <p class="w-1/3">Organisation</p>
@@ -165,6 +176,6 @@
       </div>
     </div>
   } @else {
-    <div class="flex-1 flex items-center justify-center text-gray-400">Projekt nicht gefunden.</div>
+    <div class="flex-1 flex items-center justify-center text-sm text-gray-500">Projekt nicht gefunden.</div>
   }
 </div>
